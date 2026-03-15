@@ -1,0 +1,33 @@
+<style>
+
+</style>
+
+<div class="dashboard-wrapper">
+    <div class="header">
+        <h1>Dashboard</h1>
+        <p>
+            Verified User: <strong><%= user.name %></strong> | 
+            Access Level: <span class="access-level"><%= user.level %></span>
+        </p>
+    </div>
+
+    <hr>
+
+    <div class="module-grid">
+        <h3>System Modules</h3>
+        <nav>
+            <ul>
+                <li>
+                    <a href="/superadmin/users" class="module-link">➔ Manage System Users</a>
+                </li>
+                <li>
+                    <a href="/auth/logout" class="module-link module-link--danger">➔ Terminate Session (Logout)</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+   
+</script>

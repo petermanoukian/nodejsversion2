@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title><%= title %> | High Command</title>
+    
+        <%- include('../includes/head') %>
+
+
+    <%- defineContent('style') %>
+
+</head>
+<body class="d-flex vh-100 overflow-hidden bg-light">
+
+    <%- include('../includes/sidebar') %>
+
+    <div class="d-flex flex-column flex-grow-1">
+        
+        <main class="content-container p-5 flex-grow-1 overflow-auto">
+            <%- body %>
+        </main>
+
+        <%- include('../includes/footer') %>
+    </div>
+
+<%- include('../includes/scripts') %>
+    <%- defineContent('scripts') %>
+</body>
+</html>

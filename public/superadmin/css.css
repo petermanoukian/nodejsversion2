@@ -1,0 +1,144 @@
+/* Custom Sidebar Width (Bootstrap doesn't have a fixed side-width class) */
+.sidebar {
+    width: 280px;
+    min-height: 100vh;
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 50px;
+    overflow: hidden;
+    padding: 1rem 0.5rem !important;
+}
+
+.sidebar.collapsed .nav-link span,
+.sidebar.collapsed h2,
+.sidebar.collapsed .nav-link {
+    display: none;
+}
+
+#sidebar-toggle {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+.white
+{
+    color:#fff !important;
+}
+
+.width50
+{
+    width:50px !important;
+}
+
+.whiteborder
+{
+    border-color:#fff !important;
+}
+/* Custom Red Theme */
+.text-danger {
+    color: darkred !important;
+}
+
+/* Sidebar Links */
+.sidebar .nav-link {
+    color: #ccc;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    color: #fff !important;
+    padding-left: 10px !important;
+}
+
+/* Ensure the main wrapper scrolls if content is too long */
+.main-wrapper {
+    min-width: 0;
+} 
+
+
+/* Custom Red Override for Bootstrap 'border-danger' and 'text-danger' */
+.text-danger, .border-danger {
+    color: darkred !important;
+    border-color: darkred !important;
+}
+
+.btn-outline-danger {
+    color: darkred;
+    border-color: darkred;
+}
+
+.btn-outline-danger:hover {
+    background-color: darkred;
+    border-color: darkred;
+    color: white;
+}
+
+/* Specific badge color for Level */
+.badge.bg-danger {
+    background-color: darkred !important;
+}
+
+/* Global Reset for the wrapper */
+.container-fluid {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.dashboard-wrapper {
+    font-family: sans-serif;
+    padding: 20px;
+}
+
+.dashboard-wrapper .header {
+    border-left: 10px solid darkred;
+    padding-left: 20px;
+    margin-bottom: 30px;
+}
+
+.dashboard-wrapper .header h1 {
+    color: darkred;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.dashboard-wrapper .header p {
+    margin: 5px 0;
+    color: #555;
+}
+
+.access-level {
+    color: darkred;
+    font-weight: bold;
+}
+
+.module-grid ul {
+    list-style: none;
+    padding: 0;
+}
+
+.module-grid li {
+    margin-bottom: 15px;
+}
+
+.module-link {
+    display: block;
+    padding: 10px;
+    background: #f4f4f4;
+    text-decoration: none;
+    color: #333;
+    border: 1px solid #ddd;
+    width: 250px;
+}
+
+.module-link--danger {
+    background: #fff5f5;
+    color: darkred;
+    border: 1px solid #f8d7da;
+}
+
+
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

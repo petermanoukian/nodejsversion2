@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+dist/
+build/
+
+/Mine/
+
+
+# Environment / Secrets
+.env
+.env.local
+
+# Databases (if using SQLite or local dumps)
+*.sqlite
+*.sql
+
+# Uploaded Files (CRITICAL: Ignore the actual assets)
+public/uploads/cats/large/*
+public/uploads/cats/small/*
+public/uploads/cats/docs/*
+!public/uploads/cats/.gitkeep
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
