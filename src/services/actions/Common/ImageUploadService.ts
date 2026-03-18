@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
-import { IImageUploadService, ImageUploadOptions, ImageUploadResult } from './../../interfaces/Common/IImageUploadService';
+import { IImageUploadService, ImageUploadOptions, ImageUploadResult } from '@service-interfaces/Common/IImageUploadService';
 
 export class ImageUploadService implements IImageUploadService {
     async upload(
@@ -21,11 +21,23 @@ export class ImageUploadService implements IImageUploadService {
         const originalName = file.originalname;
         const extension = path.extname(originalName).toLowerCase();
 
+        // Sanitize base name
         let baseName = baseFileName ?? path.basename(originalName, extension);
         baseName = baseName.replace(/[\s/]/g, '-');
 
-        const randomSuffix = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const fileName = `${baseName}-${randomSuffix}${extension}`;
+        // Generate file name
+        let fileName: string;
+        if (baseFileName) {
+            // Controller already gave us catName-6digits
+            // Add an extra 3 digits if desired
+            const random3 = Math.floor(100 + Math.random() * 900).toString();
+            fileName = `${baseName}-${random3}${extension}`;
+        }  else {
+            // Fallback: original name +3 digits
+
+            const random3 = Math.floor(100 + Math.random() * 900).toString();
+            fileName = `${baseName}-${random3}${extension}`;
+        }
 
         const relativeLargePath = `${largeFolder}/${fileName}`;
         const relativeSmallPath = `${smallFolder}/${fileName}`;

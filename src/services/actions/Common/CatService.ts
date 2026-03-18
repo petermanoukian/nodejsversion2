@@ -1,6 +1,6 @@
-import { ICatService } from '../../interfaces/Common/ICatService';
-import { CatRepository } from '../../../repositories/Common/CatRepository';
-import Cat from '../../../models/Common/Cat.model';
+import { ICatService } from '@service-interfaces/Common/ICatService';
+import { CatRepository } from '@repositories/Common/CatRepository';
+import Cat from '@models/Common/Cat.model';
 
 export class CatService implements ICatService {
     private catRepository: CatRepository;

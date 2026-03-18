@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { DashboardService } from '../../services/actions/SuperAdmin/DashboardService';
+import { DashboardService } from '@services/actions/SuperAdmin/DashboardService';
+
 
 export class DashboardController {
     private dashboardService: DashboardService;

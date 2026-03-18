@@ -4,7 +4,7 @@ import {
     IFileUploadService, 
     FileUploadOptions, 
     FileUploadResult 
-} from '../../interfaces/Common/IFileUploadService';
+} from '@service-interfaces/Common/IFileUploadService';
 
 export class FileUploadService implements IFileUploadService {
     /**
@@ -38,9 +38,16 @@ export class FileUploadService implements IFileUploadService {
         let baseName = baseFileName ?? path.basename(originalName, extension);
         baseName = baseName.replace(/[\s/]/g, '-');
 
-        // 4. Generate Unique Name
-        const randomSuffix = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const fileName = `${baseName}-${randomSuffix}${extension}`;
+        // 4. Generate Name
+        // If baseFileName is provided, use it directly (short + clean).
+        // Otherwise, fall back to original name + random suffix.
+        let fileName: string;
+        if (baseFileName) {
+            fileName = `${baseName}${extension}`;
+        } else {
+            const randomSuffix = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            fileName = `${baseName}-${randomSuffix}${extension}`;
+        }
 
         // 5. Paths logic
         const relativePath = `${folder}/${fileName}`;

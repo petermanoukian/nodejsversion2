@@ -2,13 +2,14 @@ import { Router } from 'express';
 import login from './public/login';
 import auth from './auth/auth';
 import superadminRoutes from './superadmin/index'; // 1. Import the sub-router 
+import { RedirectMiddleware } from '../middleware/RedirectMiddleware';
 
 
 const router = Router();
 
 
-router.get('/', (req, res) => {
-    res.send('Welcome to the Entry Point');
+router.get('/', RedirectMiddleware, (req, res) => {
+    res.redirect('/login');  // if not logged in, send to login page
 });
 
 // Public Routes (No middleware needed)

@@ -7,29 +7,30 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 const catController = new CatController();
 
-// 7-Rule: List all cats
-router.get('/', catController.list);
+// Named route constants (explicit paths)
 
-// Store (Process Form)
-// We use .fields() to handle 'img' and potential 'document'
+// Routes
+router.get('/view', catController.list);
+
+router.get('/create', catController.create);
 router.post('/store', upload.fields([
     { name: 'img', maxCount: 1 }, 
     { name: 'document', maxCount: 1 }
 ]), catController.store);
 
-// 2-Rule: GET Single by ID
-router.get('/show/:id', catController.show);
 
-// Update (Process Form)
+router.get('/check-name', catController.checkName);
+router.post('/check-name', catController.checkName);
+
+router.get('/show/:id', catController.show);
+router.get('/edit/:id', catController.edit);
+
 router.post('/update/:id', upload.fields([
     { name: 'img', maxCount: 1 },
     { name: 'document', maxCount: 1 }
 ]), catController.update);
 
-// Delete Single
 router.get('/delete/:id', catController.destroy);
-
-// Delete All (Mass Action)
 router.post('/delete-all', catController.bulkDestroy);
 
 export default router;

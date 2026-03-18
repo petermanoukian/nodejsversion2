@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
-import { CatService } from '../../services/actions/Common/CatService';
-import { ImageUploadService } from '../../services/actions/Common/ImageUploadService';
-import { FileUploadService } from '../../services/actions/Common/FileUploadService';
+import { validationResult } from 'express-validator';
+
+import { CatService } from '@services/actions/Common/CatService';
+import { ImageUploadService } from '@services/actions/Common/ImageUploadService';
+import { FileUploadService } from '@services/actions/Common/FileUploadService';
+
+import validateCat from '@request/superadmin/cat/validateCat';
+import { randomSixDigits } from '@utils/random';
+
+
 
 export class CatController {
     private catService: CatService;
@@ -14,15 +21,15 @@ export class CatController {
         this.fileService = new FileUploadService();
     }
 
-    // 7-Rule: GET Many / Search / Paginated
+    // GET Many / Search / Paginated
     public list = async (req: Request, res: Response): Promise<void> => {
         try {
             const options = {
-                page: req.query.page ? parseInt(req.query.page as string) : undefined,
-                limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+                page: req.query.page ? Number(req.query.page) : undefined,
+                limit: req.query.limit ? Number(req.query.limit) : undefined,
                 filters: req.body.filters || {},
-                orderBy: req.query.orderBy as string,
-                orderDir: req.query.orderDir as 'ASC' | 'DESC',
+                orderBy: (req.query.orderBy as string) || 'id',
+                orderDir: (req.query.orderDir as 'ASC' | 'DESC') || 'DESC',
                 search: req.query.search as string,
                 searchFields: req.body.searchFields || ['name', 'filer'],
                 useAnd: req.body.useAnd === true,
@@ -30,7 +37,7 @@ export class CatController {
                 fields: req.body.fields
             };
 
-            const result = options.page 
+            const result = options.page
                 ? await this.catService.fetchPaginatedCats(options)
                 : { rows: await this.catService.fetchAllCats(options), count: 0 };
 
@@ -40,10 +47,15 @@ export class CatController {
         }
     };
 
-    // 2-Rule: GET Single by ID
+    // GET Single by ID
     public show = async (req: Request, res: Response): Promise<void> => {
         try {
-            const id = parseInt(req.params.id);
+            const id = Number(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({ success: false, message: "Invalid ID parameter" });
+                return;
+            }
+
             const options = {
                 related: req.body.related,
                 fields: req.body.fields
@@ -59,44 +71,133 @@ export class CatController {
         }
     };
 
-    // ACTION: Store (Register)
-    public store = async (req: Request, res: Response): Promise<void> => {
+
+
+    public checkName = async (req: Request, res: Response): Promise<void> => {
         try {
-            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-            const catData = { ...req.body };
+            // Accept from POST body (preferred) or query string (fallback)
+            const namex = (req.body.name || req.query.name || '').trim();
 
-            // Handle Image Upload (using ImageUploadService for resizing)
-            if (files?.img?.[0]) {
-                const uploadResult = await this.imageService.upload(
-                    files.img[0],
-                    'uploads/cats/large',
-                    'uploads/cats/small',
-                    { baseFileName: catData.name }
-                );
-                catData.img = uploadResult.large;
-                catData.img2 = uploadResult.small; // Thumb
+            // Rule: must be at least 2 characters
+            if (!namex || namex.length < 2) {
+                res.json({ exists: false });
+                return;
             }
 
-            // Handle General File Upload (if any specific doc is needed)
-            if (files?.document?.[0]) {
-                const fileResult = await this.fileService.upload(
-                    files.document[0],
-                    'uploads/cats/docs'
-                );
-                catData.file_path = fileResult.path;
-            }
+            // Call service to check if cat exists
+            const cat = await this.catService.findCatByFilter({
+                    filters: { name: namex }
+                });
 
-            const newCat = await this.catService.registerCat(catData);
-            res.status(201).json({ success: true, data: newCat });
+            console.log('CheckName result:', cat);
+            // Respond with existence flag
+            res.json({ exists: !!cat });
         } catch (error: any) {
-            res.status(400).json({ success: false, message: error.message });
+            res.status(500).json({ error: 'Error checking cat name.' });
         }
     };
 
-    // ACTION: Update
+
+    
+
+    // FORM: Create (Show the form to register a new cat)
+    public create = async (req: Request, res: Response): Promise<void> => {
+        try {
+            // You can pass any defaults or related data needed for the form
+            res.render('superadmin/cats/create', {
+                title: 'Create New Cat',
+                defaults: {}
+            });
+        } catch (error: any) {
+            res.status(500).send('Error loading create form');
+        }
+    };
+
+    // FORM: Edit (Show the form to edit an existing cat)
+    public edit = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const id = Number(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).send('Invalid ID parameter');
+                return;
+            }
+
+            const cat = await this.catService.findCatById(id);
+            if (!cat) {
+                res.status(404).send('Cat not found');
+                return;
+            }
+
+            res.render('superadmin/cats/edit', {
+                title: 'Edit Cat',
+                cat
+            });
+        } catch (error: any) {
+            res.status(500).send('Error loading edit form');
+        }
+    };
+
+
+
+
+    // Store (Register)
+
+    public store = [
+    ...validateCat,
+
+    async (req: Request, res: Response): Promise<void> => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(422).json({ success: false, errors: errors.array() });
+        return;
+      }
+
+      try {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const catData = { ...req.body };
+
+        // Image upload
+        if (files?.img?.[0]) {
+          const uploadResult = await this.imageService.upload(
+            files.img[0],
+            'uploads/cats/large',
+            'uploads/cats/small',
+            { baseFileName: `${catData.name}-${randomSixDigits()}` }
+          );
+          catData.img = uploadResult.large;
+          catData.img2 = uploadResult.small;
+        }
+
+        // File upload
+        if (files?.document?.[0]) {
+          const fileResult = await this.fileService.upload(
+            files.document[0],
+            'uploads/cats/docs',
+            { baseFileName: `${catData.name}-${randomSixDigits()}` }
+          );
+          catData.filer = fileResult.path;
+        }
+
+        const newCat = await this.catService.registerCat(catData);
+        res.status(201).json({ success: true, data: newCat.toJSON() });
+      } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+      }
+    }
+    ];
+
+
+
+
+    // Update
     public update = async (req: Request, res: Response): Promise<void> => {
         try {
-            const id = parseInt(req.params.id);
+            const id = Number(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({ success: false, message: "Invalid ID parameter" });
+                return;
+            }
+
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
             const updateData = { ...req.body };
 
@@ -117,12 +218,15 @@ export class CatController {
         }
     };
 
-    // ACTION: Delete Single
+    // Delete Single
     public destroy = async (req: Request, res: Response): Promise<void> => {
         try {
-            const id = parseInt(req.params.id);
-            
-            // Logic: You might want to retrieve the cat first to delete physical files
+            const id = Number(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({ success: false, message: "Invalid ID parameter" });
+                return;
+            }
+
             const cat = await this.catService.findCatById(id);
             if (cat) {
                 if (cat.img) await this.fileService.remove(cat.img);
@@ -136,7 +240,7 @@ export class CatController {
         }
     };
 
-    // ACTION: Delete Many
+    // Delete Many
     public bulkDestroy = async (req: Request, res: Response): Promise<void> => {
         try {
             const count = await this.catService.bulkRemoveCats(req.body.filters);

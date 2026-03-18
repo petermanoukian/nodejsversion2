@@ -11,6 +11,12 @@ const dashboardController = new DashboardController();
 // 1. All routes here are locked behind the Level 1 check
 router.use(isSuperAdmin);
 
+
+router.use((req, res, next) => {
+    res.locals.layout = 'superadmin/layout/main';
+    next();
+});
+
 /**
  * Entry Point: GET /superadmin/dashboard
  */
