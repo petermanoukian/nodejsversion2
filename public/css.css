@@ -55,3 +55,8 @@
     box-shadow: none !important;
     pointer-events: none !important; /* 🔥 prevents clicks */
     }
+
+    .maxwidth150
+    {
+        max-width:150px !important;
+    }

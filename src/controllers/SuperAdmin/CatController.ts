@@ -22,30 +22,41 @@ export class CatController {
     }
 
     // GET Many / Search / Paginated
-    public list = async (req: Request, res: Response): Promise<void> => {
+
+
+    // Part A: render the view
+    public view = async (req: Request, res: Response): Promise<void> => {
         try {
-            const options = {
-                page: req.query.page ? Number(req.query.page) : undefined,
-                limit: req.query.limit ? Number(req.query.limit) : undefined,
-                filters: req.body.filters || {},
-                orderBy: (req.query.orderBy as string) || 'id',
-                orderDir: (req.query.orderDir as 'ASC' | 'DESC') || 'DESC',
-                search: req.query.search as string,
-                searchFields: req.body.searchFields || ['name', 'filer'],
-                useAnd: req.body.useAnd === true,
-                related: req.body.related,
-                fields: req.body.fields
-            };
-
-            const result = options.page
-                ? await this.catService.fetchPaginatedCats(options)
-                : { rows: await this.catService.fetchAllCats(options), count: 0 };
-
-            res.status(200).json({ success: true, data: result });
+            res.render('superadmin/cats/index'); // just render the template
         } catch (error: any) {
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).send(error.message);
         }
     };
+
+    // Part B: return JSON data for queries
+    public list = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const options = {
+        page: req.body.page ? Number(req.body.page) : 1,
+        limit: req.body.limit ? Number(req.body.limit) : 5,
+        filters: req.body.filters || {},
+        orderBy: req.body.orderBy || 'id',
+        orderDir: req.body.orderDir || 'DESC',
+        search: req.body.search,
+        searchFields: req.body.searchFields || ['name', 'filer'],
+        useAnd: req.body.useAnd === true,
+        related: req.body.related,
+        fields: req.body.fields
+        };
+
+        const result = await this.catService.fetchPaginatedCats(options);
+
+        res.status(200).json({ success: true, data: result });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+    };
+
 
     // GET Single by ID
     public show = async (req: Request, res: Response): Promise<void> => {
@@ -179,7 +190,7 @@ export class CatController {
         }
 
         const newCat = await this.catService.registerCat(catData);
-        res.status(201).json({ success: true, data: newCat.toJSON() });
+        res.redirect('/superadmin/cats/view');
       } catch (error: any) {
         res.status(400).json({ success: false, message: error.message });
       }

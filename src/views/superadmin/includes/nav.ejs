@@ -8,26 +8,32 @@
         </li>
 
         <!-- Categories Section -->
-        <li class="nav-item mt-4">
-            <a class="nav-link text-white fw-bold ps-0" 
-            data-bs-toggle="collapse" 
-            href="#categoriesMenu" 
-            role="button" 
-            aria-expanded="false" 
-            aria-controls="categoriesMenu">
-                Categories
-            </a>
-            <div class="collapse" id="categoriesMenu">
-                <ul class="nav flex-column ms-3 mt-2">
-                    <li class="nav-item mb-1">
-                        <a href="/superadmin/cats/create" class="nav-link text-white-50 ps-0">➕ Add Category</a>
-                    </li>
-                    <li class="nav-item mb-1">
-                        <a href="/superadmin/cats/view" class="nav-link text-white-50 ps-0">📂 Manage Categories</a>
-                    </li>
-                </ul>
-            </div>
-        </li>
+<li class="nav-item mt-4">
+  <a class="nav-link text-white fw-bold ps-0" 
+     data-bs-toggle="collapse" 
+     href="#categoriesMenu" 
+     role="button" 
+     aria-expanded="<%= (currentPath.startsWith('/superadmin/cats')) ? 'true' : 'false' %>" 
+     aria-controls="categoriesMenu">
+    Categories
+  </a>
+  <div class="collapse <%= (currentPath.startsWith('/superadmin/cats')) ? 'show' : '' %>" id="categoriesMenu">
+    <ul class="nav flex-column ms-3 mt-2">
+      <li class="nav-item mb-1">
+        <a href="/superadmin/cats/create" 
+           class="nav-link ps-0 <%= (currentPath === '/superadmin/cats/create') ? 'fw-bold text-white' : 'text-white-50' %>">
+          ➕ Add Category
+        </a>
+      </li>
+      <li class="nav-item mb-1">
+        <a href="/superadmin/cats/view" 
+           class="nav-link ps-0 <%= (currentPath === '/superadmin/cats/view') ? 'fw-bold text-white' : 'text-white-50' %>">
+          📂 Manage Categories
+        </a>
+      </li>
+    </ul>
+  </div>
+</li>
 
 
 

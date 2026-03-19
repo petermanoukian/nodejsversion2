@@ -10,7 +10,9 @@ const catController = new CatController();
 // Named route constants (explicit paths)
 
 // Routes
-router.get('/view', catController.list);
+router.get('/view', catController.view);   // render the HTML view
+router.get('/list', catController.list);   // JSON data via query params
+router.post('/list', catController.list);  // optional POST for filters
 
 router.get('/create', catController.create);
 router.post('/store', upload.fields([

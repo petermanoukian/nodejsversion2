@@ -27,6 +27,12 @@ app.set('layout', 'layout/main');
 // Point to the views folder we will create next
 app.set('views', path.join(__dirname, 'views'));
 
+app.use((req, res, next) => {
+  res.locals.currentPath = req.path;   // available in all views
+  next();
+});
+
+
 /**
  * Middleware
  */

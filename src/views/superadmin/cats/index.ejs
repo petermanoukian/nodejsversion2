@@ -1,0 +1,190 @@
+<div class="container mt-4 col-12">
+  <h2 class="mb-4">Categories</h2>
+
+  <!-- Search + Filters -->
+  <div class="row mb-3">
+    <div class="col-md-10">
+      <input type="text" id="searchInput" 
+             class="form-control maxwidth300" 
+             placeholder="Search categories..."
+             >
+    </div>
+    <div class="col-md-2">
+      <select id="rowsPerPage" class="form-select">
+        <option value="2">2 rows</option>
+        <option value="5" selected >5 rows</option>
+        <option value="10">10 rows</option>
+        <option value="25">25 rows</option>
+        <option value="50">50 rows</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <table id="catsTable" class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th data-field="id" data-label="ID">
+        <span class="label">ID</span> <span class="arrow">⇅</span>
+        </th>
+        <th data-field="name" data-label="Name">
+        <span class="label">Name</span> <span class="arrow">⇅</span>
+        </th>
+
+        <th data-field="filer">Filer</th>
+        <th data-field="createdAt">Created At</th>
+        <th data-field="img">Image</th>
+        <th data-field="action">Actions</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      <!-- rows injected via JS -->
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <nav>
+    <ul id="pagination" class="pagination justify-content-center"></ul>
+  </nav>
+</div>
+
+
+
+
+<script>
+function renderTable(rows) {
+  const tableBody = document.querySelector('#catsTable tbody');
+  tableBody.innerHTML = '';
+
+  rows.forEach(cat => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${cat.id}</td>
+      <td>${cat.name}</td>
+      <td>
+        ${cat.filer 
+          ? `<a href="/${cat.filer}" target="_blank">&raquo; Open File</a>` 
+          : ''
+        }
+      </td>
+      <td>${new Date(cat.createdAt).toLocaleDateString()}</td>
+      <td>
+        ${cat.img 
+          ? `<a href="/${cat.img}" target="_blank">
+               <img src="/${cat.img}" alt="${cat.name}" 
+                    class="img-thumbnail" style="max-width:80px;">
+             </a>` 
+          : ''
+        }
+      </td>
+      <td>
+        <button class="btn btn-sm btn-primary">Edit</button>
+        <button class="btn btn-sm btn-danger">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+$(document).ready(function() {
+  let currentPage = 1;
+  let limit = 5;
+  let search = '';
+  let orderBy = 'id';
+  let orderDir = 'DESC';
+
+  function fetchCats() {
+    $.ajax({
+      url: '/superadmin/cats/list',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        page: currentPage,
+        limit: limit,
+        search: search,
+        orderBy: orderBy,
+        orderDir: orderDir
+      }),
+      success: function(response) {
+        if (response.success) {
+          const data = response.data;
+          renderTable(data.rows);
+          renderPagination(data.count);
+          updateSortIndicators();
+        } else {
+          console.error(response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('AJAX error:', error);
+      }
+    });
+  }
+
+  function renderPagination(count) {
+    const totalPages = Math.ceil(count / limit);
+    const pagination = $('#pagination');
+    pagination.empty();
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = $('<li>').addClass('page-item').toggleClass('active', i === currentPage);
+      const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
+      a.on('click', function(e) {
+        e.preventDefault();
+        currentPage = i;
+        fetchCats();
+      });
+      li.append(a);
+      pagination.append(li);
+    }
+  }
+
+  function updateSortIndicators() {
+    $('#catsTable thead th').each(function() {
+      const field = $(this).data('field');
+      const arrowSpan = $(this).find('.arrow');
+
+      if (!arrowSpan.length) return;
+
+      if (field === orderBy) {
+        arrowSpan.text(orderDir === 'ASC' ? '▲' : '▼');
+      } else {
+        arrowSpan.text('⇅');
+      }
+    });
+  }
+
+  // Thead sort click — inside ready() so DOM exists AND vars are in scope
+  $('#catsTable thead th').on('click', function() {
+    const field = $(this).data('field');
+    if (!field || field === 'action') return;
+
+    if (orderBy === field) {
+      orderDir = orderDir === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+      orderBy = field;
+      orderDir = 'ASC';
+    }
+
+    currentPage = 1;
+    fetchCats();
+  });
+
+  $('#searchInput').on('input', function() {
+    search = $(this).val().trim();
+    currentPage = 1;
+    fetchCats();
+  });
+
+  $('#rowsPerPage').on('change', function() {
+    limit = parseInt($(this).val());
+    currentPage = 1;
+    fetchCats();
+  });
+
+  // Initial load
+  fetchCats();
+  updateSortIndicators();
+});
+</script>

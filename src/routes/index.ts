@@ -8,6 +8,8 @@ import { RedirectMiddleware } from '../middleware/RedirectMiddleware';
 const router = Router();
 
 
+
+
 router.get('/', RedirectMiddleware, (req, res) => {
     res.redirect('/login');  // if not logged in, send to login page
 });
