@@ -1,6 +1,5 @@
-
 <div class="container mt-2 col-10">
-  <h3 class="mb-2">Create New Category</h3>
+  <h3 class="mb-2">Edit Category</h3>
 
 <% if (success.length > 0) { %>
   <div class="alert alert-success" style="white-space: pre-line;"><%= success %></div>
@@ -9,14 +8,12 @@
   <div class="alert alert-danger" style="white-space: pre-line;"><%= error %></div>
 <% } %>
 
-  <form action="/superadmin/cats/store" method="POST" enctype="multipart/form-data">
+  <form action="/superadmin/cats/update/<%= cat.id %>" method="POST" enctype="multipart/form-data">
     
-    <div class="mb-3">
+    <div class="mb-2">
       <label for="name" class="form-label">Category Name</label>
-
-
-
-      <input type="text" id="name" name="name" class="form-control" required>
+      <input type="text" id="name" name="name" class="form-control" 
+             value="<%= cat.name %>" required>
       <div id="nameFeedback" class="form-text text-danger"></div>
 
         <% for(var i = 0; i < fieldErrors.length; i++) { %>
@@ -28,39 +25,47 @@
 
     <div class="mb-3">
       <label for="img" class="form-label">Upload Image</label>
+      <% if (cat.img) { %>
+        <div class="mb-2">
+          <a href="/<%= cat.img %>" target="_blank">
+            <img src="/<%= cat.img %>" alt="<%= cat.name %>" 
+                 class="img-thumbnail" style="max-width:200px;">
+          </a>
+        </div>
+      <% } %>
       <input type="file" id="img" name="img" accept="image/*" class="form-control">
       <div id="preview" class="mt-2">
         <img id="previewImg" src="" alt="Preview" class="img-thumbnail" style="max-width:200px; display:none;">
       </div>
-
-
         <% for(var i = 0; i < fieldErrors.length; i++) { %>
         <% if(fieldErrors[i].field === 'img') { %>
             <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
         <% } %>
         <% } %>
 
-
     </div>
 
     <div class="mb-3">
       <label for="document" class="form-label">Upload Document</label>
+      <% if (cat.document) { %>
+        <div class="mb-2">
+          <a href="/<%= cat.document %>" target="_blank">&raquo; Current Document</a>
+        </div>
+      <% } %>
       <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.txt,image/*" 
       class="form-control">
-
       <% for(var i = 0; i < fieldErrors.length; i++) { %>
         <% if(fieldErrors[i].field === 'document') { %>
             <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
         <% } %>
         <% } %>
-
     </div>
 
     <div class="d-flex justify-content-end">
-      <button type="submit" id="addrecord" class="btn btn-primary" disabled>Save</button>
+      <button type="submit" id="updaterecord" class="btn btn-primary">Update</button>
     </div>
   </form>
 </div>
 
 
-<%- include('script/add') %>
+<%- include('script/edit') %>

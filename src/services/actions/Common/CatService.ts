@@ -62,11 +62,7 @@ export class CatService implements ICatService {
         return deletedCount > 0;
     }
 
-    async bulkRemoveCats(filters: any): Promise<number> {
-        // Security Violation Check: Just like UserService, prevent total wipe
-        if (!filters || Object.keys(filters).length === 0) {
-            throw new Error("Security Violation: Bulk delete attempted without specific filters.");
-        }
-        return await this.catRepository.deleteMany(filters);
+    async bulkRemoveCats(ids: number[]): Promise<number> {
+    return await this.catRepository.deleteMany(ids);
     }
 }

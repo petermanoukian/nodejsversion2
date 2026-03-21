@@ -24,6 +24,16 @@ router.post('/store', upload.fields([
 router.get('/check-name', catController.checkName);
 router.post('/check-name', catController.checkName);
 
+// Explicit create check (no id)
+router.get('/check-name-update', catController.checkNameForUpdate);
+router.post('/check-name-update', catController.checkNameForUpdate);
+
+// Explicit update check (with id)
+router.get('/check-name-update/:id', catController.checkNameForUpdate);
+router.post('/check-name-update/:id', catController.checkNameForUpdate);
+
+
+
 router.get('/show/:id', catController.show);
 router.get('/edit/:id', catController.edit);
 
@@ -32,7 +42,15 @@ router.post('/update/:id', upload.fields([
     { name: 'document', maxCount: 1 }
 ]), catController.update);
 
+// GET (legacy / quick link delete)
 router.get('/delete/:id', catController.destroy);
+
+// POST (if you want to delete via a form submission)
+router.post('/delete/:id', catController.destroy);
+
+// DELETE (the REST‑correct way for AJAX / fetch)
+router.delete('/delete/:id', catController.destroy);
+
 router.post('/delete-all', catController.bulkDestroy);
 
 export default router;

@@ -71,8 +71,8 @@ export class CatRepository implements ICatRepository {
     async delete(id: number): Promise<number> {
         return await Cat.destroy({ where: { id } });
     }
-
-    async deleteMany(filters: Record<string, any>): Promise<number> {
-        return await Cat.destroy({ where: filters });
+    
+    async deleteMany(ids: number[]): Promise<number> {
+    return await Cat.destroy({ where: { id: ids } });
     }
 }

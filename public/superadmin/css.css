@@ -1,4 +1,11 @@
 /* Custom Sidebar Width (Bootstrap doesn't have a fixed side-width class) */
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+
 .sidebar {
     width: 280px;
     min-height: 100vh;
@@ -215,6 +222,25 @@ pointer-events: none !important; /* 🔥 prevents clicks */
 {
     max-width:300px !important;
 }
+
+
+.cursor
+{
+    cursor:pointer !important;
+}
+
+
+.d-flex.flex-column.flex-grow-1 {
+  min-height: 100vh; /* full viewport height */
+}
+
+.content-container {
+  flex-grow: 1;
+  overflow-y: auto;  /* vertical scroll when content exceeds */
+  overflow-x: hidden; /* optional: prevent horizontal scroll */
+}
+
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }

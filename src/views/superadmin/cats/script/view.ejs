@@ -1,0 +1,252 @@
+<script>
+
+
+
+function renderTable(rows) {
+  const tableBody = document.querySelector('#catsTable tbody');
+  tableBody.innerHTML = '';
+
+  rows.forEach(cat => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" class="row-check" value="${cat.id}"></td>
+      <td>${cat.id}</td>
+      <td>${cat.name}</td>
+      <td>
+        ${cat.filer 
+          ? `<a href="/${cat.filer}" target="_blank">&raquo; Open File</a>` 
+          : ''
+        }
+      </td>
+      
+      <td>
+        ${cat.img 
+          ? `<a href="/${cat.img}" target="_blank">
+               <img src="/${cat.img}" alt="${cat.name}" 
+                    class="img-thumbnail" style="max-width:80px;">
+             </a>` 
+          : ''
+        }
+      </td>
+      <td>${new Date(cat.createdAt).toLocaleDateString()}</td>
+      <td>
+        <button class="btn btn-sm btn-primary edit-btn" data-id="${cat.id}">Edit</button>
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${cat.id}">Delete</button>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+
+
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        window.location.href = `/superadmin/cats/edit/${id}`;
+      });
+    });
+
+
+    $('.delete-btn').on('click', function() {
+      const id = $(this).data('id');
+      if (confirm('Are you sure you want to delete this cat?')) {
+        $.ajax({
+          url: `/superadmin/cats/delete/${id}`,
+          method: 'DELETE', // or GET if you keep legacy
+          success: function(response) {
+            if (response.success) {
+              // Refresh list
+              fetchCats();
+
+              // Show success message
+              $('.alert-success').text(response.message).show();
+            } else {
+              $('.alert-danger').text(response.message).show();
+            }
+          },
+          error: function(xhr, status, error) {
+            $('.alert-danger').text('Delete error: ' + error).show();
+          }
+        });
+      }
+    });
+
+    // Select/unselect all
+    $('#selectAll').on('change', function() {
+      $('.row-check').prop('checked', this.checked);
+    });
+
+    // Inverse selection
+    $('#inverseSelection').on('click', function() {
+      $('.row-check').each(function() {
+        $(this).prop('checked', !$(this).prop('checked'));
+      });
+    });
+
+
+function toggleBulkDeleteBtn() {
+  const anyChecked = $('.row-check:checked').length > 0;
+  if (anyChecked) {
+    $('#bulkDeleteBtn').show();
+  } else {
+    $('#bulkDeleteBtn').hide();
+  }
+}
+
+// Bind to row checkboxes
+$(document).on('change', '.row-check', toggleBulkDeleteBtn);
+
+// Bind to header selectAll and inverse too
+$('#selectAll').on('change', function() {
+  $('.row-check').prop('checked', this.checked);
+  toggleBulkDeleteBtn();
+});
+
+$('#inverseSelection').on('click', function() {
+  $('.row-check').each(function() {
+    $(this).prop('checked', !$(this).prop('checked'));
+  });
+  toggleBulkDeleteBtn();
+});
+
+
+
+  // Bulk delete
+  $('#bulkDeleteBtn').on('click', function() {
+    const ids = $('.row-check:checked').map(function() {
+      return $(this).val();
+    }).get();
+
+    if (ids.length === 0) {
+      alert('No categories selected.');
+      return;
+    }
+
+    if (confirm(`Delete ${ids.length} selected categories?`)) {
+      $.ajax({
+        url: '/superadmin/cats/delete-all',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ ids }),
+        success: function(response) {
+          if (response.success) {
+            fetchCats(); // refresh list
+            $('.alert-success').text(response.message).show();
+          } else {
+            $('.alert-danger').text(response.message).show();
+          }
+        },
+        error: function(xhr, status, error) {
+          $('.alert-danger').text('Bulk delete error: ' + error).show();
+        }
+      });
+    }
+  });
+
+}
+
+
+
+
+
+$(document).ready(function() {
+  let currentPage = 1;
+  let limit = 5;
+  let search = '';
+  let orderBy = 'id';
+  let orderDir = 'DESC';
+
+  function fetchCats() {
+    $.ajax({
+      url: '/superadmin/cats/list',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        page: currentPage,
+        limit: limit,
+        search: search,
+        orderBy: orderBy,
+        orderDir: orderDir
+      }),
+      success: function(response) {
+        if (response.success) {
+          const data = response.data;
+          renderTable(data.rows);
+          renderPagination(data.count);
+          updateSortIndicators();
+        } else {
+          console.error(response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('AJAX error:', error);
+      }
+    });
+  }
+
+  function renderPagination(count) {
+    const totalPages = Math.ceil(count / limit);
+    const pagination = $('#pagination');
+    pagination.empty();
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = $('<li>').addClass('page-item').toggleClass('active', i === currentPage);
+      const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
+      a.on('click', function(e) {
+        e.preventDefault();
+        currentPage = i;
+        fetchCats();
+      });
+      li.append(a);
+      pagination.append(li);
+    }
+  }
+
+  function updateSortIndicators() {
+    $('#catsTable thead th').each(function() {
+      const field = $(this).data('field');
+      const arrowSpan = $(this).find('.arrow');
+
+      if (!arrowSpan.length) return;
+
+      if (field === orderBy) {
+        arrowSpan.text(orderDir === 'ASC' ? '▲' : '▼');
+      } else {
+        arrowSpan.text('⇅');
+      }
+    });
+  }
+
+  // Thead sort click — inside ready() so DOM exists AND vars are in scope
+  $('#catsTable thead th').on('click', function() {
+    const field = $(this).data('field');
+    if (!field || field === 'action') return;
+
+    if (orderBy === field) {
+      orderDir = orderDir === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+      orderBy = field;
+      orderDir = 'ASC';
+    }
+
+    currentPage = 1;
+    fetchCats();
+  });
+
+  $('#searchInput').on('input', function() {
+    search = $(this).val().trim();
+    currentPage = 1;
+    fetchCats();
+  });
+
+  $('#rowsPerPage').on('change', function() {
+    limit = parseInt($(this).val());
+    currentPage = 1;
+    fetchCats();
+  });
+
+  // Initial load
+    window.fetchCats = fetchCats;
+  fetchCats();
+  updateSortIndicators();
+});
+</script>

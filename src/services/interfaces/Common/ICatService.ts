@@ -13,5 +13,5 @@ export interface ICatService {
     registerCat(data: any): Promise<Cat>;
     modifyCat(id: number, data: any): Promise<Cat | null>;
     removeCat(id: number): Promise<boolean>;
-    bulkRemoveCats(filters: any): Promise<number>;
+    bulkRemoveCats(ids: number[]): Promise<number>;
 }

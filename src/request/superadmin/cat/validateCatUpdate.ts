@@ -24,29 +24,35 @@ const allowedDocExtensions = [
   '.txt', '.html', '.json',
 ];
 
-const validateCat = [
+const validateCatUpdate = [
   body('name').custom(async (value, { req }) => {
     (req as any)._validationErrors = (req as any)._validationErrors || [];
     const errors: { field: string; msg: string }[] = (req as any)._validationErrors;
-
     const name = (value || '').trim();
 
     if (!name) {
-
       errors.push({ field: 'name', msg: 'Name is required' });
-
     } else if (name.length > 255) {
       errors.push({ field: 'name', msg: 'Name must be less than 255 characters' });
-
     } else {
       try {
-        const existing = await Cat.findOne({ where: { name } });
-        if (existing) {
-          errors.push({ field: 'name', msg: 'Name already exists. Please use a different name.' });
+        let id: number | undefined;
+        if (req.body?.id) id = Number(req.body.id);
+        else if (req.params?.id) id = Number(req.params.id);
 
+        if (!id || Number.isNaN(id)) {
+          console.warn('[validateCatUpdate] No valid ID found for uniqueness check');
+        } else {
+          const existing = await Cat.findOne({
+            where: { name, id: { [Op.ne]: id } }
+          });
+          if (existing) {
+             errors.push({ field: 'name', msg: 'Name already exists. Please use a different name.' });
+
+          }
         }
       } catch (err: any) {
-        console.error('[validateCat name check failed]', err.message);
+        console.error('[validateCatUpdate name check failed]', err.message);
       }
     }
 
@@ -62,8 +68,6 @@ const validateCat = [
     const imgFile = files?.img?.[0];
     if (imgFile && !allowedImgMimetypes.includes(imgFile.mimetype)) {
       errors.push({ field: 'img', msg: 'Invalid image format. Allowed: jpg, jpeg, gif, png, tiff, webp' });
-
-    
     }
 
     const docFile = files?.document?.[0];
@@ -78,4 +82,4 @@ const validateCat = [
   }),
 ];
 
-export default validateCat;
+export default validateCatUpdate;

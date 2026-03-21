@@ -35,5 +35,5 @@ export interface ICatRepository {
     store(data: any): Promise<Cat>;
     update(id: number, data: any): Promise<[number, Cat[]]>;
     delete(id: number): Promise<number>;
-    deleteMany(filters: Record<string, any>): Promise<number>;
+    deleteMany(ids: number[]): Promise<number>;
 }

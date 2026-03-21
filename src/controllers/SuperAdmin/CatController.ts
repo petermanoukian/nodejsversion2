@@ -6,9 +6,10 @@ import { ImageUploadService } from '@services/actions/Common/ImageUploadService'
 import { FileUploadService } from '@services/actions/Common/FileUploadService';
 
 import validateCat from '@request/superadmin/cat/validateCat';
+import validateCatUpdate from '@request/superadmin/cat/validateCatUpdate';
 import { randomSixDigits } from '@utils/random';
-
-
+import asyncHandler from 'express-async-handler';
+import { Op } from 'sequelize';
 
 export class CatController {
     private catService: CatService;
@@ -109,7 +110,56 @@ export class CatController {
     };
 
 
-    
+    public checkNameForUpdateOLD = async (req: Request, res: Response): Promise<void> => 
+    {
+        try {
+            const id = Number(req.params.id || req.query.id || req.body.id);
+            const namex = (req.body.name || req.query.name || '').trim();
+
+            if (!namex || namex.length < 2) {
+                res.json({ exists: false });
+                return;
+            }
+
+            const cat = await this.catService.findCatByFilter({
+                filters: { name: namex }
+            });
+
+            // If another cat exists with this name and it's not the current one
+            if (cat && (!id || cat.id !== id)) {
+                res.json({ exists: true });
+            } else {
+                res.json({ exists: false });
+            }
+        } catch (error: any) {
+            res.status(500).json({ error: 'Error checking cat name for update.' });
+        }
+    };
+
+
+    public checkNameForUpdate = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const id = Number(req.params.id || req.query.id || req.body.id);
+        const namex = (req.body.name || req.query.name || '').trim();
+
+        if (!namex || namex.length < 2) {
+            res.json({ exists: false });
+            return;
+        }
+
+        const cat = await this.catService.findCatByFilter({
+            filters: { 
+                name: namex,
+                ...(id && !isNaN(id) ? { id: { [Op.ne]: id } } : {})
+            }
+        });
+
+        res.json({ exists: !!cat });
+    } catch (error: any) {
+        res.status(500).json({ error: 'Error checking cat name for update.' });
+    }
+};
+
 
     // FORM: Create (Show the form to register a new cat)
     public create = async (req: Request, res: Response): Promise<void> => {
@@ -150,114 +200,167 @@ export class CatController {
 
 
 
-
-    // Store (Register)
-
     public store = [
     ...validateCat,
-
-    async (req: Request, res: Response): Promise<void> => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        res.status(422).json({ success: false, errors: errors.array() });
-        return;
-      }
-
-      try {
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-        const catData = { ...req.body };
-
-        // Image upload
-        if (files?.img?.[0]) {
-          const uploadResult = await this.imageService.upload(
-            files.img[0],
-            'uploads/cats/large',
-            'uploads/cats/small',
-            { baseFileName: `${catData.name}-${randomSixDigits()}` }
-          );
-          catData.img = uploadResult.large;
-          catData.img2 = uploadResult.small;
+    asyncHandler(async (req: Request, res: Response): Promise<void> => {
+        const allErrors: { field: string; msg: string }[] = (req as any)._validationErrors || [];
+        if (allErrors.length > 0) {
+            req.flash('error', allErrors.map(e => e.msg).join('\n'));
+            req.flash('fieldErrors', JSON.stringify(allErrors));
+            res.redirect('/superadmin/cats/create'); // or redirectUrl
+            return;
         }
 
-        // File upload
-        if (files?.document?.[0]) {
-          const fileResult = await this.fileService.upload(
-            files.document[0],
-            'uploads/cats/docs',
-            { baseFileName: `${catData.name}-${randomSixDigits()}` }
-          );
-          catData.filer = fileResult.path;
-        }
-
-        const newCat = await this.catService.registerCat(catData);
-        res.redirect('/superadmin/cats/view');
-      } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-      }
-    }
-    ];
-
-
-
-
-    // Update
-    public update = async (req: Request, res: Response): Promise<void> => {
         try {
-            const id = Number(req.params.id);
-            if (isNaN(id)) {
-                res.status(400).json({ success: false, message: "Invalid ID parameter" });
-                return;
-            }
-
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-            const updateData = { ...req.body };
+            const catData = { ...req.body };
+
+            if (catData.name) {
+                catData.name = catData.name.trim().replace(/\s+/g, ' ');
+            }
 
             if (files?.img?.[0]) {
                 const uploadResult = await this.imageService.upload(
                     files.img[0],
                     'uploads/cats/large',
-                    'uploads/cats/small'
+                    'uploads/cats/small',
+                    { baseFileName: `${catData.name}-${randomSixDigits()}` }
                 );
-                updateData.img = uploadResult.large;
-                updateData.img2 = uploadResult.small;
+                catData.img = uploadResult.large;
+                catData.img2 = uploadResult.small;
             }
 
-            const updatedCat = await this.catService.modifyCat(id, updateData);
-            res.status(200).json({ success: true, data: updatedCat });
+            if (files?.document?.[0]) {
+                const fileResult = await this.fileService.upload(
+                    files.document[0],
+                    'uploads/cats/docs',
+                    { baseFileName: `${catData.name}-${randomSixDigits()}` }
+                );
+                catData.filer = fileResult.path;
+            }
+
+            await this.catService.registerCat(catData);
+            req.flash('success', 'Category created successfully!');
+            res.redirect('/superadmin/cats/view');
         } catch (error: any) {
-            res.status(400).json({ success: false, message: error.message });
+            let msg = 'Failed to create category. Please try again.';
+            if (error.name === 'SequelizeUniqueConstraintError') {
+                msg = `"${error.errors[0].value}" already exists. Please use a different name.`;
+            } else if (error.message) {
+                msg = error.message;
+            }
+            req.flash('error', msg);
+            res.redirect('/superadmin/cats/create');
         }
-    };
+    })
+    ];
+
+    public update = [
+        ...validateCatUpdate,
+        async (req: Request, res: Response): Promise<void> => {
+            const id = Number(req.params?.id || req.body?.id);
+            const redirectUrl = `/superadmin/cats/edit/${id}`;
+
+            try {
+                if (!id || isNaN(id)) {
+                    req.flash('error', 'Invalid ID parameter');
+                    res.redirect('/superadmin/cats/view');
+                    return;
+                }
+
+                const allErrors: { field: string; msg: string }[] = (req as any)._validationErrors || [];
+                if (allErrors.length > 0) {
+                    req.flash('error', allErrors.map(e => e.msg).join('\n'));
+                    req.flash('fieldErrors', JSON.stringify(allErrors));
+                    res.redirect(redirectUrl); // or redirectUrl
+                    return;
+                }
+
+                const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+                const updateData = { ...req.body };
+
+                if (updateData.name) {
+                    updateData.name = updateData.name.trim().replace(/\s+/g, ' ');
+                }
+
+                if (files?.img?.[0]) {
+                    const uploadResult = await this.imageService.upload(
+                        files.img[0],
+                        'uploads/cats/large',
+                        'uploads/cats/small',
+                        { baseFileName: `${updateData.name}-${randomSixDigits()}` }
+                    );
+                    updateData.img = uploadResult.large;
+                    updateData.img2 = uploadResult.small;
+                }
+
+                if (files?.document?.[0]) {
+                    const fileResult = await this.fileService.upload(
+                        files.document[0],
+                        'uploads/cats/docs',
+                        { baseFileName: `${updateData.name}-${randomSixDigits()}` }
+                    );
+                    updateData.filer = fileResult.path;
+                }
+
+                await this.catService.modifyCat(id, updateData);
+                req.flash('success', 'Category updated successfully!');
+                res.redirect('/superadmin/cats/view');
+            } catch (error: any) {
+                let msg = 'Failed to update category. Please try again.';
+                if (error.name === 'SequelizeUniqueConstraintError') {
+                    msg = `"${error.errors[0].value}" already exists. Please use a different name.`;
+                } else if (error.message) {
+                    msg = error.message;
+                }
+                req.flash('error', msg);
+                res.redirect(redirectUrl);
+            }
+        }
+    ];
+
 
     // Delete Single
     public destroy = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const id = Number(req.params.id);
-            if (isNaN(id)) {
-                res.status(400).json({ success: false, message: "Invalid ID parameter" });
-                return;
-            }
-
-            const cat = await this.catService.findCatById(id);
-            if (cat) {
-                if (cat.img) await this.fileService.remove(cat.img);
-                if (cat.img2) await this.fileService.remove(cat.img2);
-            }
-
-            const success = await this.catService.removeCat(id);
-            res.status(200).json({ success, message: success ? "Cat deleted" : "Delete failed" });
-        } catch (error: any) {
-            res.status(500).json({ success: false, message: error.message });
+    try {
+        const id = Number(req.params.id);
+        if (isNaN(id)) {
+        res.status(400).json({ success: false, message: "Invalid ID parameter" });
+        return;
         }
+
+        const cat = await this.catService.findCatById(id);
+        if (cat) {
+        if (cat.img) await this.fileService.remove(cat.img);
+        if (cat.img2) await this.fileService.remove(cat.img2);
+        if (cat.filer) await this.fileService.remove(cat.filer);
+        }
+
+        const success = await this.catService.removeCat(id);
+        res.status(200).json({
+        success,
+        message: success ? "Cat deleted successfully" : "Delete failed"
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
     };
+
 
     // Delete Many
     public bulkDestroy = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const count = await this.catService.bulkRemoveCats(req.body.filters);
-            res.status(200).json({ success: true, message: `${count} cats removed` });
-        } catch (error: any) {
-            res.status(400).json({ success: false, message: error.message });
+    try {
+        const ids: number[] = req.body.ids || [];
+        if (!Array.isArray(ids) || ids.length === 0) {
+        res.status(400).json({ success: false, message: "No IDs provided" });
+        return;
         }
+
+        const count = await this.catService.bulkRemoveCats(ids);
+        res.status(200).json({ success: true, message: `${count} cats removed` });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+    }
     };
+
 }

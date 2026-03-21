@@ -1,0 +1,58 @@
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('name');
+    const feedback = document.getElementById('nameFeedback');
+    const saveBtn = document.getElementById('updaterecord');
+
+    nameInput.addEventListener('input', async function () {
+        const name = this.value.trim();
+
+        if (name.length < 2) {
+            feedback.textContent = 'Name must be at least 2 characters.';
+            return;
+        }
+
+        try {
+            const trimmedName = name.trim().replace(/\s+/g, ' ');
+            const res = await fetch('/superadmin/cats/check-name-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name:trimmedName, id: <%= cat.id %> })
+            });
+
+
+            const data = await res.json();
+
+            if (data.exists && name !== "<%= cat.name %>") {
+                feedback.textContent = 'This cat name already exists.';
+                saveBtn.disabled = true;
+            } else {
+                feedback.textContent = 'Available ✓';
+                saveBtn.disabled = false;
+            }
+
+        } catch (err) {
+            console.error(err);
+            feedback.textContent = 'Error checking name.';
+        }
+    });
+});
+
+const imgInput = document.getElementById('img');
+const previewImg = document.getElementById('previewImg');
+
+imgInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewImg.src = '';
+        previewImg.style.display = 'none';
+    }
+});
+</script>
