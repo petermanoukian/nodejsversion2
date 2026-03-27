@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "rootDir": "./src",
     "outDir": "./dist",
     "sourceMap": true,
@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+     "typeRoots": ["./src/types", "./node_modules/@types"], 
 
     "baseUrl": "./src",
     "paths": {
@@ -21,7 +22,9 @@
       "@repositories/*": ["repositories/*"],
       "@utils/*": ["utils/*"],
       "@interfaces/*": ["interfaces/*"],
-      "@service-interfaces/*": ["services/interfaces/*"]
+      "@service-interfaces/*": ["services/interfaces/*"],
+      "@repository-interfaces/*": ["repositories/interfaces/*"],
+      "@config/*": ["config/*"]
     }
   },
   "include": ["src/**/*"],

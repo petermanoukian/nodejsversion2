@@ -1,6 +1,6 @@
-import { IUserService } from '../../interfaces/SuperAdmin/IUserService';
-import { UserRepository } from '../../../repositories/SuperAdmin/UserRepository';
-import User from '../../../models/SuperAdmin/User.model';
+import { IUserService } from '@service-interfaces/SuperAdmin/IUserService';
+import { UserRepository } from '@repositories/SuperAdmin/UserRepository';
+import User from '@models/SuperAdmin/User.model';
 import bcrypt from 'bcryptjs';
 
 export class UserService implements IUserService {

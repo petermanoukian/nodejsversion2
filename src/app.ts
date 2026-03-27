@@ -5,6 +5,8 @@ import session from 'express-session';
 import flash from 'connect-flash';
 import expressLayouts from 'express-ejs-layouts';
 import apiRouter from './routes/index';
+import ejsMate from 'ejs-mate';
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,9 +44,15 @@ app.use((req, res, next) => {
 });
 
 // EJS + layouts
+/*
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
 app.set('layout', 'layout/main');
+app.set('views', path.join(__dirname, 'views'));*/
+
+// EJS + layouts
+app.engine('ejs', ejsMate);
+app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Body parsers & static

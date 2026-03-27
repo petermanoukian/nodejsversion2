@@ -1,0 +1,272 @@
+<script>
+
+window.catid = <%= catid ? catid : 'null' %>;
+window.rowCount = <%- JSON.stringify(rowCount) %>;
+
+$(document).ready(function() 
+{
+  let currentPage = 1;
+  let limit = 5;
+  let search = '';
+  let orderBy = 'id';
+  let orderDir = 'DESC';
+
+
+  function toggleBulkDeleteBtn() {
+    const anyChecked = $('.row-check:checked').length > 0;
+    $('#bulkDeleteBtn').toggle(anyChecked);
+  }
+
+
+  $('#selectAll').on('change', function() {
+    $('.row-check').prop('checked', this.checked);
+    toggleBulkDeleteBtn();
+  });
+
+
+    $('#inverseSelection').on('click', function() {
+      $('.row-check').each(function() {
+        $(this).prop('checked', !$(this).prop('checked'));
+      });
+      toggleBulkDeleteBtn();
+    });
+
+
+  $('#bulkDeleteBtn').on('click', function() 
+  {
+    const ids = $('.row-check:checked').map(function() {
+      return $(this).val();
+    }).get();
+
+    if (ids.length === 0) {
+      alert('No categories selected.');
+      return;
+    }
+
+    if (confirm(`Delete ${ids.length} selected categories?`)) {
+      $.ajax({
+        url: '/superadmin/subcats/delete-all',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ ids }),
+        success: function(response) {
+          if (response.success) {
+            fetchRecords(); // refresh list
+            $('.alert-success').text(response.message).show();
+          } else {
+            $('.alert-danger').text(response.message).show();
+          }
+        },
+        error: function(xhr, status, error) {
+          $('.alert-danger').text('Bulk delete error: ' + error).show();
+        }
+      });
+    }
+  });
+
+
+
+
+    $(document).on('change', '.row-check', toggleBulkDeleteBtn);
+
+
+    $('.delete-btn').on('click', function() {
+      const id = $(this).data('id');
+      if (confirm('Are you sure you want to delete this subcategory?')) {
+        $.ajax({
+          url: `/superadmin/subcats/delete/${id}`,
+          method: 'DELETE',
+          success: function(response) {
+            if (response.success) {
+              fetchRecords();
+              $('.alert-success').text(response.message).show();
+            } else {
+              $('.alert-danger').text(response.message).show();
+            }
+          },
+          error: function(xhr) {
+            $('.alert-danger').text('Delete error: ' + xhr.statusText).show();
+          }
+        });
+      }
+    });
+
+
+  function fetchRecords() {
+    $.ajax({
+      url: window.catid ? `/superadmin/subcats/list/${window.catid}` : '/superadmin/subcats/list',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        page: currentPage,
+        limit: limit,
+        search: search,
+        orderBy: orderBy,
+        orderDir: orderDir
+      }),
+      success: function(response) {
+        if (response.success) {
+          const data = response.data;
+          renderTable(data.rows);
+          renderPagination(data.count);
+          updateSortIndicators();
+        } else {
+          console.error(response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('AJAX error:', error);
+      }
+    });
+
+
+
+
+    
+  }
+
+
+    function renderPagination(count) {
+    const totalPages = Math.ceil(count / limit);
+    const pagination = $('#pagination');
+    pagination.empty();
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = $('<li>').addClass('page-item').toggleClass('active', i === currentPage);
+      const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
+      a.on('click', function(e) {
+        e.preventDefault();
+        currentPage = i;
+        fetchRecords();
+      });
+      li.append(a);
+      pagination.append(li);
+    }
+  }
+
+
+
+  function renderTable(rows) {
+    const tableBody = document.querySelector('#dataTable tbody');
+    tableBody.innerHTML = '';
+
+    rows.forEach(subcat => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" class="row-check" value="${subcat.id}"></td>
+        <td>${subcat.id}</td>
+        <td>${subcat.name}</td>
+        <td>${subcat.Cat?.name || ''}</td>
+        <td>
+          ${subcat.filer 
+            ? `<a href="/${subcat.filer}" target="_blank">&raquo; Open File</a>` 
+            : ''
+          }
+        </td>
+        <td>
+          ${subcat.img 
+            ? `<a href="/${subcat.img}" target="_blank">
+                <img src="/${subcat.img2}" alt="${subcat.name}" 
+                      class="img-thumbnail" style="max-width:80px;">
+              </a>` 
+            : ''
+          }
+        </td>
+        <td>${new Date(subcat.createdAt).toLocaleDateString()}</td>
+        <td>
+          <a href="/superadmin/subcats/edit/${subcat.id}" class="btn btn-sm btn-primary">Edit</a>
+          <button class="btn btn-sm btn-danger delete-btn" data-id="${subcat.id}">Delete</button>
+          <a href="/superadmin/subcats/create/${subcat.Cat?.id}" class="btn btn-sm btn-success">Add Subcategory</a>
+
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    $('#selectAll').prop('checked', false);
+    toggleBulkDeleteBtn();
+
+
+
+    $('.delete-btn').on('click', function() {
+      const id = $(this).data('id');
+      if (confirm('Are you sure you want to delete this subcategory?')) {
+        $.ajax({
+          url: `/superadmin/subcats/delete/${id}`,
+          method: 'DELETE',
+          success: function(response) {
+            if (response.success) {
+              fetchRecords();
+              $('.alert-success').text(response.message).show();
+            } else {
+              $('.alert-danger').text(response.message).show();
+            }
+          },
+          error: function(xhr, status, error) {
+            $('.alert-danger').text('Delete error: ' + error).show();
+          }
+        });
+      }
+    });
+  }
+
+  $('#categorySelect').on('change', function() {
+    const selectedCat = $(this).val();
+    window.catid = selectedCat && selectedCat !== '' ? selectedCat : null;
+    currentPage = 1; // reset to first page when filter changes
+    fetchRecords();
+  });
+
+
+  function updateSortIndicators() {
+    $('#dataTable thead th').each(function() {
+      const field = $(this).data('field');
+      const arrowSpan = $(this).find('.arrow');
+
+      if (!arrowSpan.length) return;
+
+      if (field === orderBy) {
+        arrowSpan.text(orderDir === 'ASC' ? '▲' : '▼');
+      } else {
+        arrowSpan.text('⇅');
+      }
+    });
+  }
+
+  // Thead sort click — inside ready() so DOM exists AND vars are in scope
+  $('#dataTable thead th').on('click', function() {
+    const field = $(this).data('field');
+    if (!field || field === 'action') return;
+
+    if (orderBy === field) {
+      orderDir = orderDir === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+      orderBy = field;
+      orderDir = 'ASC';
+    }
+
+    currentPage = 1;
+    fetchRecords();
+  });
+
+  $('#searchInput').on('input', function() {
+    search = $(this).val().trim();
+    currentPage = 1;
+    fetchRecords();
+  });
+
+  $('#rowsPerPage').on('change', function() {
+    limit = parseInt($(this).val());
+    currentPage = 1;
+    fetchRecords();
+  });
+
+  // Initial load
+
+  window.fetchRecords = fetchRecords;
+  fetchRecords();
+  updateSortIndicators();
+
+
+});
+</script>

@@ -4,6 +4,7 @@ import { isSuperAdmin } from '../../middleware/SuperAdminMiddleware';
 
 // ✅ Import your cats route
 import catsRouter from './cats';
+import subcatsRouter from './subcats';
 
 const router = Router();
 const dashboardController = new DashboardController();
@@ -27,5 +28,5 @@ router.get('/dashboard', dashboardController.index);
  * Example: GET /superadmin/cats
  */
 router.use('/cats', catsRouter);
-
+router.use('/subcats', subcatsRouter);
 export default router;

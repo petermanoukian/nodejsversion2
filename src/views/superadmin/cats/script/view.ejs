@@ -30,20 +30,18 @@ function renderTable(rows) {
       </td>
       <td>${new Date(cat.createdAt).toLocaleDateString()}</td>
       <td>
-        <button class="btn btn-sm btn-primary edit-btn" data-id="${cat.id}">Edit</button>
+        
+        <a href="/superadmin/cats/edit/${cat.id}" class="btn btn-sm btn-primary">Edit</a>
         <button class="btn btn-sm btn-danger delete-btn" data-id="${cat.id}">Delete</button>
+        <a href="/superadmin/subcats/view/${cat.id}" class="btn btn-sm btn-info">View Subcategories</a>
+        <a href="/superadmin/subcats/create/${cat.id}" class="btn btn-sm btn-success">Add Subcategory</a>
       </td>
     `;
     tableBody.appendChild(tr);
   });
 
 
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const id = this.dataset.id;
-        window.location.href = `/superadmin/cats/edit/${id}`;
-      });
-    });
+
 
 
     $('.delete-btn').on('click', function() {
@@ -75,43 +73,39 @@ function renderTable(rows) {
       $('.row-check').prop('checked', this.checked);
     });
 
-    // Inverse selection
-    $('#inverseSelection').on('click', function() {
-      $('.row-check').each(function() {
-        $(this).prop('checked', !$(this).prop('checked'));
-      });
-    });
 
 
-function toggleBulkDeleteBtn() {
-  const anyChecked = $('.row-check:checked').length > 0;
-  if (anyChecked) {
-    $('#bulkDeleteBtn').show();
-  } else {
-    $('#bulkDeleteBtn').hide();
+
+  function toggleBulkDeleteBtn() {
+    const anyChecked = $('.row-check:checked').length > 0;
+    if (anyChecked) {
+      $('#bulkDeleteBtn').show();
+    } else {
+      $('#bulkDeleteBtn').hide();
+    }
   }
-}
 
-// Bind to row checkboxes
-$(document).on('change', '.row-check', toggleBulkDeleteBtn);
+  // Bind to row checkboxes
+  $(document).on('change', '.row-check', toggleBulkDeleteBtn);
 
-// Bind to header selectAll and inverse too
-$('#selectAll').on('change', function() {
-  $('.row-check').prop('checked', this.checked);
-  toggleBulkDeleteBtn();
-});
-
-$('#inverseSelection').on('click', function() {
-  $('.row-check').each(function() {
-    $(this).prop('checked', !$(this).prop('checked'));
+  // Bind to header selectAll and inverse too
+  $('#selectAll').on('change', function() {
+    $('.row-check').prop('checked', this.checked);
+    toggleBulkDeleteBtn();
   });
+
+  $('#inverseSelection').on('click', function() {
+    $('.row-check').each(function() {
+      $(this).prop('checked', !$(this).prop('checked'));
+    });
   toggleBulkDeleteBtn();
 });
 
 
 
   // Bulk delete
-  $('#bulkDeleteBtn').on('click', function() {
+  $('#bulkDeleteBtn').on('click', function() 
+  {
     const ids = $('.row-check:checked').map(function() {
       return $(this).val();
     }).get();

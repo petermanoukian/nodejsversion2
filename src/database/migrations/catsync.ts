@@ -1,5 +1,5 @@
-import sequelize from '../../config/db.config';
-import Cat from '../../models/Common/Cat.model'; 
+import sequelize from '@config/db.config';
+import Cat from '@models/Common/Cat.model'; 
 
 async function syncCatTable() {
     try {

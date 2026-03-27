@@ -1,4 +1,4 @@
-import Cat from '../../../models/Common/Cat.model';
+import Cat from '@models/Common/Cat.model';
 
 export interface GetManyOptions {
     filters?: Record<string, any>;

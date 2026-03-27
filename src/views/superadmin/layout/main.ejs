@@ -5,10 +5,11 @@
     <title><%= typeof title !== 'undefined' ? title : 'NodeSJ' %> | Express</title>
 
     
-        <%- include('../includes/head') %>
+    <%- include('../includes/head') %>
 
 
-    <%- defineContent('style') %>
+        <%- block('style') %>
+
 
 </head>
 <body class="d-flex vh-100 overflow-hidden bg-light">
@@ -24,7 +25,8 @@
         <%- include('../includes/footer') %>
     </div>
 
-<%- include('../includes/scripts') %>
-    <%- defineContent('scripts') %>
+    <%- include('../includes/scripts') %>
+        <%- block('script') %>
+
 </body>
 </html>

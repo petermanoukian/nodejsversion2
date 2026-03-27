@@ -59,6 +59,54 @@ export class CatController {
     };
 
 
+    public dropdownJson = async (req: Request, res: Response): Promise<void> => {
+        try {
+            // id can come from route param, query string, or POST body
+            const idParam = req.params.id ? Number(req.params.id) : undefined;
+            const idQuery = req.query.id ? Number(req.query.id) : undefined;
+            const idBody = req.body.id ? Number(req.body.id) : undefined;
+
+            const preselectId = idParam ?? idQuery ?? idBody ?? null;
+
+            const cats = await this.catService.fetchAllCats({
+                orderBy: 'name',
+                orderDir: 'ASC',
+                fields: ['id', 'name']
+            });
+
+            res.json({ cats, preselectId });
+        } catch (error: any) {
+            res.status(500).send('Error loading cats dropdown JSON');
+        }
+    };
+
+    // --- Partial view dropdown ---
+    public dropdownView = async (req: Request, res: Response): Promise<void> => {
+        try {
+            // id can come from route param, query string, or POST body
+            const idParam = req.params.id ? Number(req.params.id) : undefined;
+            const idQuery = req.query.id ? Number(req.query.id) : undefined;
+            const idBody = req.body.id ? Number(req.body.id) : undefined;
+
+            const preselectId = idParam ?? idQuery ?? idBody ?? null;
+
+            const cats = await this.catService.fetchAllCats({
+                orderBy: 'name',
+                orderDir: 'ASC',
+                fields: ['id', 'name']
+            });
+
+            res.render('partials/cats/dropdown', {
+                title: 'Select Cat',
+                cats,
+                preselectId
+            });
+        } catch (error: any) {
+            res.status(500).send('Error loading cats dropdown view');
+        }
+    };
+
+
     // GET Single by ID
     public show = async (req: Request, res: Response): Promise<void> => {
         try {
@@ -138,27 +186,27 @@ export class CatController {
 
 
     public checkNameForUpdate = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const id = Number(req.params.id || req.query.id || req.body.id);
-        const namex = (req.body.name || req.query.name || '').trim();
+        try {
+            const id = Number(req.params.id || req.query.id || req.body.id);
+            const namex = (req.body.name || req.query.name || '').trim();
 
-        if (!namex || namex.length < 2) {
-            res.json({ exists: false });
-            return;
-        }
-
-        const cat = await this.catService.findCatByFilter({
-            filters: { 
-                name: namex,
-                ...(id && !isNaN(id) ? { id: { [Op.ne]: id } } : {})
+            if (!namex || namex.length < 2) {
+                res.json({ exists: false });
+                return;
             }
-        });
 
-        res.json({ exists: !!cat });
-    } catch (error: any) {
-        res.status(500).json({ error: 'Error checking cat name for update.' });
-    }
-};
+            const cat = await this.catService.findCatByFilter({
+                filters: { 
+                    name: namex,
+                    ...(id && !isNaN(id) ? { id: { [Op.ne]: id } } : {})
+                }
+            });
+
+            res.json({ exists: !!cat });
+        } catch (error: any) {
+            res.status(500).json({ error: 'Error checking cat name for update.' });
+        }
+    };
 
 
     // FORM: Create (Show the form to register a new cat)

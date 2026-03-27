@@ -1,11 +1,11 @@
-import Cat from '../../models/Common/Cat.model';
+import Cat from '@models/Common/Cat.model';
 import {
     ICatRepository,
     GetManyOptions,
     GetManyPaginatedOptions,
     GetOneByFilterOptions,
     GetByIdOptions,
-} from '../interfaces/Common/ICatRepository'; // STRICT: Only from Common interface
+} from '@repository-interfaces/Common/ICatRepository'; // STRICT: Only from Common interface
 import { Op, WhereOptions } from 'sequelize';
 
 export class CatRepository implements ICatRepository {

@@ -1,4 +1,4 @@
-import Cat from '../../../models/Common/Cat.model';
+import Cat from '@models/Common/Cat.model';
 
 export interface ICatService {
     // 5-Rule & 7-Rule operations (Collections)

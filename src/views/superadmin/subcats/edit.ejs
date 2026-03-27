@@ -1,0 +1,105 @@
+<%- layout('superadmin/layout/main') %>
+<%- block('title').append('Edit Subcategory') %>
+
+<% block('style').append(`
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+</style>
+`) %>
+
+<div class="container mt-2 col-10">
+  <div class="row">
+    <div class="col-md-6 d-flex align-items-center">
+      <h4 class="mb-2">Edit Subcategory</h4>
+    </div>
+    <div class="col-md-4 d-flex align-items-center">
+      <a href="/superadmin/subcats/view/<%= subcat.cat_id %>" 
+        class="btn btn-sm btn-success ms-2">
+        View Subcategories
+      </a>
+    </div>
+  </div>
+
+  <% if (success.length > 0) { %>
+    <div class="alert alert-success" style="white-space: pre-line;"><%= success %></div>
+  <% } %>
+  <% if (error.length > 0) { %>
+    <div class="alert alert-danger" style="white-space: pre-line;"><%= error %></div>
+  <% } %>
+
+  <form action="/superadmin/subcats/update/<%= subcat.id %>" method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="catid" class="form-label">Select Category</label>
+      <select id="catid" name="catid" class="form-select" required>
+        <option value="">-- Select Category --</option>
+        <!-- JS will populate -->
+      </select>
+      <% for(var i = 0; i < fieldErrors.length; i++) { %>
+        <% if(fieldErrors[i].field === 'subcat.catid') { %>
+          <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">SubCategory Name</label>
+      <input type="text" id="name" name="name" class="form-control" 
+             value="<%= subcat.name %>" required>
+      <div id="nameFeedback" class="form-text text-danger"></div>
+      <% for(var i = 0; i < fieldErrors.length; i++) { %>
+        <% if(fieldErrors[i].field === 'name') { %>
+          <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="mb-3">
+      <label for="img" class="form-label">Upload Image</label>
+      <input type="file" id="img" name="img" accept="image/*" class="form-control">
+      <div id="preview" class="mt-2">
+        <% if (subcat.img2) { %>
+          <img id="previewImg" src="/<%= subcat.img2 %>" 
+               alt="Preview" class="img-thumbnail" style="max-width:200px;max-height:150px;">
+        <% } else { %>
+          <img id="previewImg" src="" alt="Preview" class="img-thumbnail" 
+               style="max-width:200px; display:none;">
+        <% } %>
+      </div>
+      <% for(var i = 0; i < fieldErrors.length; i++) { %>
+        <% if(fieldErrors[i].field === 'img') { %>
+          <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="mb-3">
+      <label for="document" class="form-label">Upload Document</label>
+      <input type="file" id="document" name="document" 
+             accept=".pdf,.doc,.docx,.txt,image/*" class="form-control">
+      <% if (subcat.document) { %>
+        <p class="mt-2">Current: <a href="/uploads/subcats/<%= subcat.document %>" target="_blank">
+            File</a></p>
+      <% } %>
+      <% for(var i = 0; i < fieldErrors.length; i++) { %>
+        <% if(fieldErrors[i].field === 'document') { %>
+          <div class="invalid-feedback" style="display:block;"><%= fieldErrors[i].msg %></div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" id="updaterecord" class="btn btn-primary">Update</button>
+    </div>
+  </form>
+</div>
+
+<%- include('script/edit') %>
+
+<% block('script').append(`
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"><\/script>
+<script>
+  $(document).ready(function () {
+    $('#catid').select2();
+  });
+<\/script>
+`) %>

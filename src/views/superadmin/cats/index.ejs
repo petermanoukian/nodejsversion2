@@ -1,3 +1,4 @@
+<%- layout('superadmin/layout/main') %>
 <div class="container mt-2 col-12">
   <h3 class="mb-2">Categories</h3>
 
@@ -10,12 +11,20 @@
 
   <!-- Search + Filters -->
   <div class="row mb-2">
-    <div class="col-md-10">
+    <div class="col-md-6">
       <input type="text" id="searchInput" 
              class="form-control maxwidth300" 
              placeholder="Search categories..."
              >
     </div>
+
+    <div class="col-md-4 d-flex align-items-center">
+      <a href="/superadmin/cats/create" 
+        class="btn btn-sm btn-success ms-2">
+        ➕ Add Category
+      </a>
+    </div>
+
     <div class="col-md-2">
       <select id="rowsPerPage" class="form-select">
         <option value="2">2 rows</option>
@@ -42,14 +51,12 @@
         <span class="label cursor">ID</span> <span class="arrow cursor">⇅</span>
         </th>
         <th data-field="name" data-label="Name">
-        <span class="label cursor">Name</span> <span class="arrow cursor">⇅</span>
+          <span class="label cursor">Name</span> <span class="arrow cursor">⇅</span>
         </th>
-        <th data-field="img">Image</th>
         <th data-field="filer">File</th>
+        <th data-field="img">Image</th>
         <th data-field="createdAt">Created At</th>
-        
         <th data-field="action">Actions</th>
-
       </tr>
     </thead>
     <tbody>

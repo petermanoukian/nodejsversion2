@@ -240,6 +240,25 @@ pointer-events: none !important; /* 🔥 prevents clicks */
   overflow-x: hidden; /* optional: prevent horizontal scroll */
 }
 
+.nav-link
+{
+    padding:3px 5px !important;
+}
+
+/* keep it thin, override to match Bootstrap form-select */
+.select2-container .select2-selection--single {
+height: 40px !important;
+padding: 0.375rem 0.25rem !important;
+font-size: 1rem !important;
+line-height: 1.5 !important;
+}
+.select2-container .select2-selection__rendered {
+line-height: 1.5 !important;
+}
+.select2-container .select2-selection__arrow {
+height: 2.25rem !important;
+}
+
 
 
 @keyframes fadeIn {

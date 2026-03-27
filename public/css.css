@@ -1,67 +1,72 @@
 
-    .form-wrapper {
-        max-width: 600px;
-        margin: 2rem auto;
-        padding: 1.5rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background: #fafafa;
-    }
-    .form-wrapper h2 {
-        margin-bottom: 1rem;
-    }
-    .form-group {
-        margin-bottom: 1rem;
-    }
-    .form-group label {
-        display: block;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    .form-group input {
-        width: 100%;
-        padding: 0.5rem;
-    }
-    .form-actions {
-        text-align: right;
-    }
-    .form-actions button {
-        padding: 0.6rem 1.2rem;
-        background: #007acc;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+.form-wrapper {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fafafa;
+}
+.form-wrapper h2 {
+    margin-bottom: 1rem;
+}
+.form-group {
+    margin-bottom: 1rem;
+}
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+}
+.form-actions {
+    text-align: right;
+}
+.form-actions button {
+    padding: 0.6rem 1.2rem;
+    background: #007acc;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
 
 
-    #addrecord:disabled {
-    background-color: #e0e0e0 !important;
-    border: 1px solid #999 !important;
-    color: #555 !important;
-    cursor: default !important;   /* 👈 what you want */
-    opacity: 0.6 !important;
-    box-shadow: none !important;
-    pointer-events: none;         /* 🔥 THIS is key */
-    }
+#addrecord:disabled {
+background-color: #e0e0e0 !important;
+border: 1px solid #999 !important;
+color: #555 !important;
+cursor: default !important;   /* 👈 what you want */
+opacity: 0.6 !important;
+box-shadow: none !important;
+pointer-events: none;         /* 🔥 THIS is key */
+}
 
 
-    .disabled-btn {
-    background-color: #e0e0e0 !important;
-    border: 1px solid #999 !important;
-    color: #555 !important;
-    opacity: 0.6 !important;
-    cursor: default !important;
-    box-shadow: none !important;
-    pointer-events: none !important; /* 🔥 prevents clicks */
-    }
+.disabled-btn {
+background-color: #e0e0e0 !important;
+border: 1px solid #999 !important;
+color: #555 !important;
+opacity: 0.6 !important;
+cursor: default !important;
+box-shadow: none !important;
+pointer-events: none !important; /* 🔥 prevents clicks */
+}
 
-    .maxwidth150
-    {
-        max-width:150px !important;
-    }
+.maxwidth150
+{
+    max-width:150px !important;
+}
 
-    .cursor
-    {
-        cursor:pointer !important;
-    }
+.cursor
+{
+    cursor:pointer !important;
+}
+
+.nav-link
+{
+    padding:5px !important;
+}
