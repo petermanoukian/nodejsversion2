@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 
-    <title><%= typeof title !== 'undefined' ? title : 'NodeSJ' %> | Express</title>
+<title><%- block('title').toString() || 'NodeJS' %> | Express</title>
 
     
     <%- include('../includes/head') %>

@@ -103,8 +103,7 @@ export class SubCatController {
 
         const catid = rawCatid ? Number(rawCatid) : '';
 
-        res.render('superadmin/subcats/create', { 
-        title: 'Create SubCat', 
+        res.render('superadmin/subcats/create', {  
         catid,
         success: [],       // ✅ defined
         error: [],         // ✅ defined
