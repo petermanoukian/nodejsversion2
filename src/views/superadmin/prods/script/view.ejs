@@ -1,0 +1,264 @@
+<script>
+window.catid = <%= catid ? catid : 'null' %>;
+window.subcatid = <%= subcatid ? subcatid : 'null' %>;
+window.rowCount = <%- JSON.stringify(rowCount) %>;
+
+$(document).ready(function() {
+  let currentPage = 1;
+  let limit = 5;
+  let search = '';
+  let orderBy = 'id';
+  let orderDir = 'DESC';
+
+  function toggleBulkDeleteBtn() {
+    const anyChecked = $('.row-check:checked').length > 0;
+    $('#bulkDeleteBtn').toggle(anyChecked);
+  }
+
+  $('#selectAll').on('change', function() {
+    $('.row-check').prop('checked', this.checked);
+    toggleBulkDeleteBtn();
+  });
+
+  $('#inverseSelection').on('click', function() {
+    $('.row-check').each(function() {
+      $(this).prop('checked', !$(this).prop('checked'));
+    });
+    toggleBulkDeleteBtn();
+  });
+
+  $('#bulkDeleteBtn').on('click', function() {
+    const ids = $('.row-check:checked').map(function() {
+      return $(this).val();
+    }).get();
+
+    if (ids.length === 0) {
+      alert('No products selected.');
+      return;
+    }
+
+    if (confirm(`Delete ${ids.length} selected products?`)) {
+      $.ajax({
+        url: '/superadmin/prods/delete-all',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ ids }),
+        success: function(response) {
+          if (response.success) {
+            fetchRecords();
+            $('.alert-success').text(response.message).show();
+          } else {
+            $('.alert-danger').text(response.message).show();
+          }
+        },
+        error: function(xhr, status, error) {
+          $('.alert-danger').text('Bulk delete error: ' + error).show();
+        }
+      });
+    }
+  });
+
+  $(document).on('change', '.row-check', toggleBulkDeleteBtn);
+
+  $('.delete-btn').on('click', function() {
+    const id = $(this).data('id');
+    if (confirm('Are you sure you want to delete this product?')) {
+      $.ajax({
+        url: `/superadmin/prods/delete/${id}`,
+        method: 'DELETE',
+        success: function(response) {
+          if (response.success) {
+            fetchRecords();
+            $('.alert-success').text(response.message).show();
+          } else {
+            $('.alert-danger').text(response.message).show();
+          }
+        },
+        error: function(xhr) {
+          $('.alert-danger').text('Delete error: ' + xhr.statusText).show();
+        }
+      });
+    }
+  });
+
+  function fetchRecords() {
+    $.ajax({
+      url: '/superadmin/prods/list',   // always POST to /list
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        page: currentPage,
+        limit: limit,
+        search: search,
+        orderBy: orderBy,
+        orderDir: orderDir,
+        catid: window.catid,       // ✅ send catid in body
+        subcatid: window.subcatid  // ✅ send subcatid in body
+      }),
+      success: function(response) {
+        if (response.success) {
+          const data = response.data;
+          renderTable(data.rows);
+          renderPagination(data.count);
+          updateSortIndicators();
+        } else {
+          console.error(response.message);
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('AJAX error:', error);
+      }
+    });
+  }
+
+
+  function renderTable(rows) {
+    const tableBody = document.querySelector('#dataTable tbody');
+    tableBody.innerHTML = '';
+
+    rows.forEach(prod => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" class="row-check" value="${prod.id}"></td>
+        <td>${prod.id}</td>
+        <td>${prod.name}</td>
+        <td>${prod.Cat?.name || ''}</td>
+        <td>${prod.SubCat?.name || ''}</td>
+        <td>
+          ${prod.filer 
+            ? `<a href="/${prod.filer}" target="_blank">&raquo; Open File</a>` 
+            : ''
+          }
+        </td>
+        <td>
+          ${prod.img 
+            ? `<a href="/${prod.img}" target="_blank">
+                <img src="/${prod.img2}" alt="${prod.name}" 
+                      class="img-thumbnail" style="max-width:80px;">
+              </a>` 
+            : ''
+          }
+        </td>
+        <td>${new Date(prod.createdAt).toLocaleDateString()}</td>
+        <td>
+          <a href="/superadmin/prods/edit/${prod.id}" class="btn btn-sm btn-primary">
+            <i class="fas fa-pencil-alt"></i>
+          </a>
+          <button class="btn btn-sm btn-danger delete-btn" data-id="${prod.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+
+    $('#selectAll').prop('checked', false);
+    toggleBulkDeleteBtn();
+  }
+
+  function renderPagination(count) {
+    const totalPages = Math.ceil(count / limit);
+    const pagination = $('#pagination');
+    pagination.empty();
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = $('<li>').addClass('page-item').toggleClass('active', i === currentPage);
+      const a = $('<a>').addClass('page-link').attr('href', '#').text(i);
+      a.on('click', function(e) {
+        e.preventDefault();
+        currentPage = i;
+        fetchRecords();
+      });
+      li.append(a);
+      pagination.append(li);
+    }
+  }
+
+
+// --- Subcategories loader ---
+  async function loadSubcats(catid, preselectId = null) {
+    try {
+      const res = await fetch('/superadmin/subcats/dropdownjson', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catid, id: preselectId })
+      });
+
+      const data = await res.json(); // { subcats, preselectId, catid }
+      console.log('subcat dropdown data:', data);
+
+      const subcatSelect = document.getElementById('subcatSelect');
+      subcatSelect.innerHTML = '<option value="">-- All Subcategories --</option>';
+      data.subcats.forEach(subcat => {
+        const opt = document.createElement('option');
+        opt.value = subcat.id;
+        opt.textContent = subcat.name;
+        if (data.preselectId && data.preselectId === subcat.id) {
+          opt.selected = true;
+        }
+        subcatSelect.appendChild(opt);
+      });
+    } catch (err) {
+        console.error('Error fetching subcats dropdown:', err);
+      }
+  }
+
+  // --- Trigger subcat load when category changes ---
+  $('#catid').on('change select2:select', async function () {
+      const selectedCatId = this.value;
+
+      window.catid = selectedCatId && selectedCatId !== '' ? Number(selectedCatId) : null;
+      window.subcatid = null; // reset subcat when category changes
+
+      if (selectedCatId) {
+        await loadSubcats(selectedCatId);
+      } else {
+        document.getElementById('subcatSelect').innerHTML =
+          '<option value="">-- All Subcategories --</option>';
+      }
+      currentPage = 1;
+      fetchRecords();
+  });
+
+  // --- Trigger product filter when subcategory changes ---
+  $('#subcatSelect').on('change select2:select', function () {
+    const selectedSubcatId = this.value;
+    window.subcatid = selectedSubcatId && selectedSubcatId !== '' ? Number(selectedSubcatId) : null;
+
+    currentPage = 1;
+    fetchRecords();
+  });
+
+
+  function updateSortIndicators() {
+    $('#dataTable thead th').each(function() {
+      const field = $(this).data('field');
+      const arrowSpan = $(this).find('.arrow');
+      if (!arrowSpan.length) return;
+
+      if (field === orderBy) {
+        arrowSpan.text(orderDir === 'ASC' ? '▲' : '▼');
+      } else {
+        arrowSpan.text('⇅');
+      }
+    });
+  }
+
+  $('#searchInput').on('input', function() {
+    search = $(this).val().trim();
+    currentPage = 1;
+    fetchRecords();
+  });
+
+  $('#rowsPerPage').on('change', function() {
+    limit = parseInt($(this).val());
+    currentPage = 1;
+    fetchRecords();
+  });
+
+  // Initial load
+  window.fetchRecords = fetchRecords;
+  fetchRecords();
+  updateSortIndicators();
+});
+</script>

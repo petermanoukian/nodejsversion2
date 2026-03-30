@@ -1,6 +1,9 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '@config/db.config';
 
+import SubCat from './SubCat.model';
+import Prod from './Prod.model';
+
 export interface CatAttributes {
     id: number;
     name: string;
@@ -22,6 +25,8 @@ class Cat extends Model<CatAttributes, CatCreationAttributes> implements CatAttr
     declare img2: string | null;
     declare readonly createdAt: Date;
     declare readonly updatedAt: Date;
+    declare subcats?: SubCat[];
+    declare prods?: Prod[];
 }
 
 Cat.init(

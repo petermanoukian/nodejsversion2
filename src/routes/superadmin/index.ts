@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { DashboardController } from '../../controllers/SuperAdmin/DashboardController';
-import { isSuperAdmin } from '../../middleware/SuperAdminMiddleware';
+import { DashboardController } from '@controllers/SuperAdmin/DashboardController';
+import { isSuperAdmin } from '@middleware/SuperAdminMiddleware';
 
 // ✅ Import your cats route
 import catsRouter from './cats';
 import subcatsRouter from './subcats';
+import prodsRouter from './prods';   
 
 const router = Router();
 const dashboardController = new DashboardController();
@@ -29,4 +30,5 @@ router.get('/dashboard', dashboardController.index);
  */
 router.use('/cats', catsRouter);
 router.use('/subcats', subcatsRouter);
+router.use('/prods', prodsRouter);  
 export default router;

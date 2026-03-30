@@ -2,6 +2,7 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '@config/db.config';
 import Cat from './Cat.model';
+import Prod from './Prod.model';
 
 export interface SubCatAttributes {
     id: number;
@@ -31,6 +32,8 @@ class SubCat extends Model<SubCatAttributes, SubCatCreationAttributes>
     declare dess: string | null;
     declare readonly createdAt: Date;
     declare readonly updatedAt: Date;
+    declare Cat?: Cat;
+    declare prods?: Prod[];
 }
 
 SubCat.init(
@@ -47,6 +50,7 @@ SubCat.init(
                 model: Cat,
                 key: 'id',
             },
+            onDelete: 'CASCADE',
         },
         name: {
             type: DataTypes.STRING,
@@ -85,6 +89,8 @@ SubCat.init(
         ],
     }
 );
-SubCat.belongsTo(Cat, { foreignKey: 'catid' });
+
+// Associations
+
 
 export default SubCat;

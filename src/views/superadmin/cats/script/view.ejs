@@ -2,7 +2,8 @@
 
 
 
-function renderTable(rows) {
+function renderTable(rows) 
+{
   const tableBody = document.querySelector('#catsTable tbody');
   tableBody.innerHTML = '';
 
@@ -30,13 +31,28 @@ function renderTable(rows) {
       </td>
       <td>${new Date(cat.createdAt).toLocaleDateString()}</td>
       <td>
-        
-        <a href="/superadmin/cats/edit/${cat.id}" class="btn btn-sm btn-primary">Edit</a>
-        <button class="btn btn-sm btn-danger delete-btn" data-id="${cat.id}">Delete</button>
-        <a href="/superadmin/subcats/view/${cat.id}" class="btn btn-sm btn-info">View Subcategories</a>
-        <a href="/superadmin/subcats/create/${cat.id}" class="btn btn-sm btn-success">Add Subcategory</a>
-      </td>
-    `;
+        <a href="/superadmin/cats/edit/${cat.id}" class="btn btn-sm btn-primary" title="Edit">
+          <i class="fas fa-pencil-alt"></i>
+        </a>
+        <button class="btn btn-sm btn-danger delete-btn" data-id="${cat.id}" title="Delete">
+          <i class="fas fa-trash"></i>
+        </button>
+        <a href="/superadmin/subcats/view/${cat.id}" class="btn btn-sm btn-info">
+          Subcategories${cat.subcatCount > 0 ? ` (${cat.subcatCount})` : ''}
+        </a>
+        <a href="/superadmin/subcats/create/${cat.id}" class="btn btn-sm btn-success" title="Add Subcategory">
+          <i class="fas fa-plus"></i> Subcategory
+        </a>
+
+        <div class="mt-2">
+          <a href="/superadmin/prods/view/${cat.id}" class="btn btn-sm btn-warning">
+            Products${cat.prodCount > 0 ? ` (${cat.prodCount})` : ''}
+          </a>
+          <a href="/superadmin/prods/create/${cat.id}" class="btn btn-sm btn-success" title="Add Product">
+            <i class="fas fa-plus"></i> Product
+          </a>
+        </div>
+      </td>`;
     tableBody.appendChild(tr);
   });
 

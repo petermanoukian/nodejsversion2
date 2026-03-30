@@ -2,7 +2,8 @@
   window.catid = <%= catid ? catid : 'null' %>;
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => 
+{
     const nameInput = document.getElementById('name');
     const catSelect = document.getElementById('catid'); // ✅ use catid
     const feedback = document.getElementById('nameFeedback');
@@ -88,10 +89,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Error fetching dropdown:', err);
   }
 });
-
-
-
-
 
 
 const imgInput = document.getElementById('img');

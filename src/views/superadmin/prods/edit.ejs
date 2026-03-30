@@ -1,0 +1,102 @@
+<%- layout('superadmin/layout/main') %>
+<%- block('title').append('Edit Product') %>
+
+<% block('style').append(`
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+</style>
+`) %>
+
+<div class="container mt-2 col-12">
+
+  <!-- Row 1: Product -->
+  <div class="row mb-2 border-bottom py-2">
+    <div class="col-md-4 d-flex align-items-center justify-content-start">
+      <h5 class="mb-2"><i class="fas fa-edit"></i> Edit Product</h5>
+    </div>
+
+
+  </div>
+
+
+  <% if (success.length > 0) { %>
+    <div class="alert alert-success" style="white-space: pre-line;"><%= success %></div>
+  <% } %>
+  <% if (error.length > 0) { %>
+    <div class="alert alert-danger" style="white-space: pre-line;"><%= error %></div>
+  <% } %>
+
+  <form action="/superadmin/prods/update/<%= prod.id %>" method="POST" enctype="multipart/form-data">
+
+    <!-- Category -->
+    <div class="mb-3">
+      <label for="catid" class="form-label">Select Category</label>
+      <select id="catid" name="catid" class="form-select" required>
+        <option value="">-- Select Category --</option>
+      </select>
+    </div>
+
+    <!-- Subcategory -->
+    <div class="mb-3">
+      <label for="subcatid" class="form-label">Select Subcategory</label>
+      <select id="subcatid" name="subcatid" class="form-select" required>
+        <option value="">-- Select Subcategory --</option>
+      </select>
+    </div>
+
+    <!-- Product Name -->
+    <div class="mb-3">
+      <label for="name" class="form-label">Product Name</label>
+      <input type="text" id="name" name="name" class="form-control" required value="<%= prod.name %>">
+      <div id="nameFeedback" class="form-text text-danger"></div>
+    </div>
+
+    <!-- Description -->
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea id="description" name="des" class="form-control" rows="3"><%= prod.des %></textarea>
+    </div>
+
+    <!-- Details -->
+    <div class="mb-3">
+      <label for="details" class="form-label">Details</label>
+      <textarea id="details" name="dess" class="form-control" rows="5"><%= prod.dess %></textarea>
+    </div>
+
+    <!-- Image Upload -->
+    <div class="mb-3">
+      <label for="img" class="form-label">Upload Image</label>
+      <input type="file" id="img" name="img" accept="image/*" class="form-control">
+      <div id="preview" class="mt-2">
+        <img id="previewImg" src="<%= prod.img ? '/' + prod.img : '' %>" 
+             alt="Preview" class="img-thumbnail" 
+             style="max-width:200px; <%= prod.img ? '' : 'display:none;' %>">
+      </div>
+    </div>
+
+    <!-- Document Upload -->
+    <div class="mb-3">
+      <label for="document" class="form-label">Upload Document</label>
+      <input type="file" id="document" name="document" accept=".pdf,.doc,.docx,.txt,image/*" class="form-control">
+      <% if (prod.filer) { %>
+        <p class="mt-2">Current: <a href="/<%= prod.filer %>" target="_blank"><%= prod.filer %></a></p>
+      <% } %>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" id="updaterecord" class="btn btn-primary" disabled>Update</button>
+    </div>
+  </form>
+</div>
+
+<%- include('script/edit') %>
+
+<% block('script').append(`
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"><\/script>
+<script>
+  $(document).ready(function () {
+    $('#catid').select2();
+    $('#subcatid').select2();
+  });
+<\/script>
+`) %>

@@ -64,6 +64,35 @@
         </li>
 
 
+        <li class="nav-item mt-1">
+          <a class="nav-link text-white fw-bold ps-0" 
+            data-bs-toggle="collapse" 
+            href="#productsMenu" 
+            role="button" 
+            aria-expanded="<%= (currentPath.startsWith('/superadmin/prods')) ? 'true' : 'false' %>" 
+            aria-controls="productsMenu">
+            Products
+          </a>
+          <div class="collapse <%= (currentPath.startsWith('/superadmin/prods')) ? 'show' : '' %>" id="productsMenu">
+            <ul class="nav flex-column ms-3 mt-1">
+              <li class="nav-item mb-1">
+                <a href="/superadmin/prods/create" 
+                  class="nav-link ps-0 <%= (currentPath === '/superadmin/prods/create') ? 'fw-bold text-white' : 'text-white-50' %>">
+                  ➕ Add
+                </a>
+              </li>
+              <li class="nav-item mb-1">
+                <a href="/superadmin/prods/view" 
+                  class="nav-link ps-0 <%= (currentPath === '/superadmin/prods/view') ? 'fw-bold text-white' : 'text-white-50' %>">
+                  📂 View
+                </a>
+              </li>
+            </ul>
+          </div>
+        </li>
+
+
+
 
 
         <li class="nav-item border-top border-secondary mt-4 pt-3">

@@ -24,7 +24,8 @@
       "@interfaces/*": ["interfaces/*"],
       "@service-interfaces/*": ["services/interfaces/*"],
       "@repository-interfaces/*": ["repositories/interfaces/*"],
-      "@config/*": ["config/*"]
+      "@config/*": ["config/*"], 
+      "@middleware/*": ["middleware/*"]
     }
   },
   "include": ["src/**/*"],

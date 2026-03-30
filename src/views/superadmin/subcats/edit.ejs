@@ -76,8 +76,8 @@
       <label for="document" class="form-label">Upload Document</label>
       <input type="file" id="document" name="document" 
              accept=".pdf,.doc,.docx,.txt,image/*" class="form-control">
-      <% if (subcat.document) { %>
-        <p class="mt-2">Current: <a href="/uploads/subcats/<%= subcat.document %>" target="_blank">
+      <% if (subcat.filer) { %>
+        <p class="mt-2">Current: <a href="/<%= subcat.filer %>" target="_blank">
             File</a></p>
       <% } %>
       <% for(var i = 0; i < fieldErrors.length; i++) { %>

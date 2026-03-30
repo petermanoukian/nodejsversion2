@@ -1,0 +1,195 @@
+<script>
+window.catid = <%= prod.catid ? prod.catid : 'null' %>;
+window.subcatid = <%= prod.subcatid ? prod.subcatid : 'null' %>;
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('name');
+    const catSelect = document.getElementById('catid');   // ✅ category
+    const subcatSelect = document.getElementById('subcatid'); // ✅ subcategory
+    const feedback = document.getElementById('nameFeedback');
+    const saveBtn = document.getElementById('updaterecord'); // 🔧 renamed for clarity
+
+    // start disabled
+    saveBtn.disabled = true;
+    saveBtn.classList.add('disabled-btn');
+
+    async function validateProd() {
+        const name = nameInput.value.trim();
+        const catid = catSelect.value;
+        const subcatid = subcatSelect.value;
+
+        // always disable while checking
+        saveBtn.disabled = true;
+        saveBtn.classList.add('disabled-btn');
+
+        if (name.length < 2 || !catid || !subcatid) {
+            feedback.textContent = 'Name must be at least 2 characters, category and subcategory required.';
+            return;
+        }
+
+        try {
+            const trimmedName = name.replace(/\s+/g, ' ');
+            const res = await fetch('/superadmin/prods/check-name-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: <%= prod.id %>,   // ✅ include current product ID
+                    name: trimmedName,
+                    catid,
+                    subcatid
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.exists) {
+                feedback.textContent = 'This product already exists under the selected subcategory.';
+            } else {
+                feedback.textContent = 'Available ✓';
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('disabled-btn');
+            }
+        } catch (err) {
+            console.error(err);
+            feedback.textContent = 'Error checking product name.';
+        }
+    }
+
+    // Trigger validation on name typing, category change, and subcategory change
+    nameInput.addEventListener('input', validateProd);
+    $('#catid').on('change select2:select', validateProd);
+    $('#subcatid').on('change select2:select', validateProd);
+});
+
+document.addEventListener('DOMContentLoaded', async () => 
+{
+    const catid = Number(window.catid);
+    const subcatid = Number(window.subcatid);
+    const catSelect = document.getElementById('catid');
+    const subcatSelect = document.getElementById('subcatid');
+
+    // --- Categories ---
+    const catUrl = catid && !isNaN(catid)
+        ? `/superadmin/cats/dropdownjson/${catid}`
+        : `/superadmin/cats/dropdownjson`;
+
+    try {
+        const res = await fetch(catUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await res.json(); // { cats, preselectId }
+        console.log('category dropdown data:', data);
+
+        // Populate category select
+        catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+        data.cats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        if (data.preselectId && data.preselectId === cat.id) {
+            opt.selected = true;
+        }
+        catSelect.appendChild(opt);
+        });
+
+        // If we already have a catid, load subcats immediately
+        if (catid) {
+        await loadSubcats(catid, subcatid);
+        }
+    } catch (err) {
+        console.error('Error fetching categories dropdown:', err);
+    }
+
+    async function loadSubcats(catid, preselectId = null) {
+        try {
+            const res = await fetch('/superadmin/subcats/dropdownjson', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ catid, id: preselectId })
+            });
+
+            const data = await res.json(); // { subcats, preselectId, catid }
+            console.log('subcat dropdown data:', data);
+
+            subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+            data.subcats.forEach(subcat => {
+                const opt = document.createElement('option');
+                opt.value = subcat.id;
+                opt.textContent = subcat.name;
+                if (data.preselectId && data.preselectId === subcat.id) {
+                opt.selected = true;
+                }
+                subcatSelect.appendChild(opt);
+            });
+            validateProd();
+        } catch (err) {
+        console.error('Error fetching subcats dropdown:', err);
+        }
+    }
+
+
+    $('#catid').on('change select2:select', async function () {
+        const selectedCatId = this.value;
+        if (selectedCatId) {
+        await loadSubcats(selectedCatId);
+        } else {
+        subcatSelect.innerHTML = '<option value="">-- Select Subcategory --</option>';
+        }
+    });
+});
+
+const imgInput = document.getElementById('img');
+const previewImg = document.getElementById('previewImg');
+
+imgInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (file) {
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Invalid file type. Please upload an image (jpg, png, gif, webp).');
+      this.value = ''; // clear the input
+      previewImg.src = '';
+      previewImg.style.display = 'none';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      previewImg.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+  }
+ 
+});
+
+
+const docInput = document.getElementById('document');
+docInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        const validTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'text/plain',
+            'image/gif',
+            'image/jpeg',
+            'image/png'
+        ];
+        if (!validTypes.includes(file.type)) {
+            alert('Invalid file type. Allowed: PDF, DOC, DOCX, TXT, JPG, PNG.');
+            this.value = '';
+        }
+    }
+});
+
+
+
+</script>

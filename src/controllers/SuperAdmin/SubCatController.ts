@@ -4,7 +4,7 @@ import { CatService } from '@services/actions/Common/CatService';
 import { SubCatService } from '@services/actions/Common/SubCatService';
 import { ImageUploadService } from '@services/actions/Common/ImageUploadService';
 import { FileUploadService } from '@services/actions/Common/FileUploadService';
-
+import { ProdService } from '@services/actions/Common/ProdService';
 import validateSubCat from '@request/superadmin/subcat/validateSubCat';
 import validateSubCatUpdate from '@request/superadmin/subcat/validateSubCatUpdate';
 import { randomSixDigits } from '@utils/random';
@@ -20,12 +20,14 @@ export class SubCatController {
     private catService: CatService;
     private imageService: ImageUploadService;
     private fileService: FileUploadService;
+    private prodService: ProdService;
 
     constructor() {
         this.subCatService = new SubCatService();
         this.catService = new CatService();
         this.imageService = new ImageUploadService();
         this.fileService = new FileUploadService();
+        this.prodService = new ProdService();
     }
 
     // --- Render view ---
@@ -77,18 +79,32 @@ export class SubCatController {
             search: req.body.search,
             searchFields: req.body.searchFields || ['name', '$Cat.name$'],
             useAnd: req.body.useAnd === true,
-            related: [{ model: Cat, attributes: ['id', 'name'] }],
+            related: [
+                { model: Cat, as: 'Cat', attributes: ['id', 'name'] },
+                { association: 'prods', attributes: ['id'] }   // 👈 include products
+            ],
             fields: req.body.fields
             };
 
+
             const result = await this.subCatService.fetchPaginatedSubCats(options);
+
+            const rowsWithCount = result.rows.map(subcat => {
+            const s: any = subcat; // cast to any
+            const prodCount = s.prods ? s.prods.length : 0;
+
+            return {
+                ...subcat.toJSON(),
+                prodCount
+            };
+            });
 
             res.status(200).json({
             success: true,
-            data: result,
-            catid,
-            
+            data: { rows: rowsWithCount, count: result.count },
+            catid
             });
+
         } catch (error: any) {
             res.status(500).json({ success: false, message: error.message });
         }
@@ -311,28 +327,27 @@ export class SubCatController {
 
 
 
-    // --- Show ---
     public show = async (req: Request, res: Response): Promise<void> => {
-        try {
-            const id = Number(req.params.id || req.query.id || req.body.id);
-            const catid = Number(req.params.catid || req.query.catid || req.body.catid);
+    try {
+        const id = Number(req.params.id || req.query.id || req.body.id);
 
-            if (!id || isNaN(id) || !catid || isNaN(catid)) {
-                res.status(400).json({ success: false, message: "Invalid ID or CatID parameter" });
-                return;
-            }
-
-            const subcat = await this.subCatService.findSubCatById(id);
-            if (!subcat || subcat.catid !== catid) {
-                res.status(404).json({ success: false, message: "SubCat not found" });
-                return;
-            }
-
-            res.status(200).json({ success: true, data: subcat });
-        } catch (error: any) {
-            res.status(500).json({ success: false, message: error.message });
+        if (!id || isNaN(id)) {
+        res.status(400).json({ success: false, message: "Invalid ID parameter" });
+        return;
         }
+
+        const subcat = await this.subCatService.findSubCatById(id);
+        if (!subcat) {
+        res.status(404).json({ success: false, message: "SubCat not found" });
+        return;
+        }
+
+        res.status(200).json({ success: true, data: subcat });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
     };
+
 
     // --- Edit form ---
     public edit = async (req: Request, res: Response): Promise<void> => {
@@ -411,27 +426,53 @@ export class SubCatController {
         }
     };
 
-
-
-
+    // Delete Single SubCat
     public destroy = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const id = Number(req.params.id);
-        if (!id || isNaN(id)) {
-        res.status(400).json({ success: false, message: "Invalid ID parameter" });
-        return;
-        }
+        try {
+                const id = Number(req.params.id);
+                if (isNaN(id)) {
+                res.status(400).json({ success: false, message: "Invalid ID parameter" });
+                return;
+                }
 
-        const success = await this.subCatService.removeSubCat(id);
-        res.status(200).json({
-        success,
-        message: success ? "SubCat deleted successfully" : "Delete failed"
-        });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+            // Fetch SubCat with its Prods
+                const subcat = await this.subCatService.findSubCatById(id, {
+                include: ['prods']
+                });
+
+                if (!subcat) {
+                res.status(404).json({ success: false, message: "SubCat not found" });
+                return;
+                }
+
+                // Remove SubCat files
+                if (subcat.img) await this.fileService.remove(subcat.img);
+                if (subcat.img2) await this.fileService.remove(subcat.img2);
+                if (subcat.filer) await this.fileService.remove(subcat.filer);
+
+                // Delete Prods under SubCat
+                for (const prod of subcat.prods || []) {
+                if (prod.img) await this.fileService.remove(prod.img);
+                if (prod.img2) await this.fileService.remove(prod.img2);
+                if (prod.filer) await this.fileService.remove(prod.filer);
+                await this.prodService.removeProd(prod.id);
+            }
+
+            // Finally delete the SubCat
+            const success = await this.subCatService.removeSubCat(id);
+
+            res.status(200).json({
+            success,
+            message: success ? "SubCat and its Prods deleted successfully" : "Delete failed"
+            });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     };
 
+
+
+    // Delete Many SubCats
     public bulkDestroy = async (req: Request, res: Response): Promise<void> => {
     try {
         const ids: number[] = req.body.ids || [];
@@ -440,14 +481,43 @@ export class SubCatController {
         return;
         }
 
-        const count = await this.subCatService.bulkRemoveSubCats(ids);
-        res.status(200).json({ success: true, message: `${count} subcats removed` });
+        let deletedCount = 0;
+
+        for (const id of ids) {
+        const subcat = await this.subCatService.findSubCatById(id, {
+            include: ['prods']
+        });
+
+        if (!subcat) continue;
+
+        // Remove SubCat files
+        if (subcat.img) await this.fileService.remove(subcat.img);
+        if (subcat.img2) await this.fileService.remove(subcat.img2);
+        if (subcat.filer) await this.fileService.remove(subcat.filer);
+
+        // Delete Prods under SubCat
+        for (const prod of subcat.prods || []) {
+            if (prod.img) await this.fileService.remove(prod.img);
+            if (prod.img2) await this.fileService.remove(prod.img2);
+            if (prod.filer) await this.fileService.remove(prod.filer);
+            await this.prodService.removeProd(prod.id);
+        }
+
+        // Finally delete the SubCat
+        const success = await this.subCatService.removeSubCat(id);
+        if (success) deletedCount++;
+        }
+
+        res.status(200).json({
+        success: true,
+        message: `${deletedCount} subcats (with prods) removed`
+        });
     } catch (error: any) {
         res.status(400).json({ success: false, message: error.message });
     }
     };
 
 
-
+   
 
 }

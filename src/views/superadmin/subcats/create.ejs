@@ -7,21 +7,37 @@
 </style>
 `) %>
 
-<div class="container mt-2 col-10">
-  <div class = 'row'>
-      <div class="col-md-6 d-flex align-items-center">
-        <h4 class="mb-2">Create New Category</h4>
+<div class="container mt-2 col-12">
+  <div class = 'row mb-2 border-bottom py-2'>
+      <div class="col-md-4 d-flex align-items-center justify-content-start">
+        <h5 class="mb-2"><i class="fas fa-plus"></i> Subcategory</h5>
       </div>
       
-
-
-      <div class="col-md-4 d-flex align-items-center">
+      <div class="col-md-3 d-flex align-items-center">
         <a href="/superadmin/subcats/view<%= catid ? '/' + catid : '' %>" 
           class="btn btn-sm btn-success ms-2">
-          View  Subcategories
+          <i class="fas fa-eye"></i> Subcategories
         </a>
       </div>
-  </div>
+
+      <div class="col-md-2 d-flex align-items-center">
+        <a href="/superadmin/cats/view" 
+          class="btn btn-sm btn-info fw-bold">
+          <i class="fas fa-eye"></i> Categories
+        </a>
+      </div>
+
+      <div class="col-md-3 d-flex align-items-center">
+        <a href="/superadmin/cats/create" 
+          class="btn btn-sm btn-success ms-2">
+          <i class="fas fa-plus"></i> Category
+        </a>
+      </div>
+
+    </div>
+
+
+
 
   <% if (success.length > 0) { %>
     <div class="alert alert-success" style="white-space: pre-line;"><%= success %></div>

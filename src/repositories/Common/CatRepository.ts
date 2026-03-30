@@ -1,4 +1,6 @@
 import Cat from '@models/Common/Cat.model';
+import '@models/Common/associations';
+
 import {
     ICatRepository,
     GetManyOptions,
@@ -73,6 +75,6 @@ export class CatRepository implements ICatRepository {
     }
     
     async deleteMany(ids: number[]): Promise<number> {
-    return await Cat.destroy({ where: { id: ids } });
+        return await Cat.destroy({ where: { id: ids } });
     }
 }

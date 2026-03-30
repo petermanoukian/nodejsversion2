@@ -174,9 +174,24 @@ $(document).ready(function()
         </td>
         <td>${new Date(subcat.createdAt).toLocaleDateString()}</td>
         <td>
-          <a href="/superadmin/subcats/edit/${subcat.id}" class="btn btn-sm btn-primary">Edit</a>
-          <button class="btn btn-sm btn-danger delete-btn" data-id="${subcat.id}">Delete</button>
-          <a href="/superadmin/subcats/create/${subcat.Cat?.id}" class="btn btn-sm btn-success">Add Subcategory</a>
+          <a href="/superadmin/subcats/edit/${subcat.id}" class="btn btn-sm btn-primary">
+            <i class="fas fa-pencil-alt"></i>
+          </a>
+          <button class="btn btn-sm btn-danger delete-btn" data-id="${subcat.id}">
+            <i class="fas fa-trash"></i>
+          </button>
+          <a href="/superadmin/subcats/create/${subcat.Cat?.id}" class="btn btn-sm btn-success">
+            <i class="fas fa-plus"></i> Subcategory</a>
+          <div class="mt-2">
+          <a href="/superadmin/prods/view/${subcat.catid}/${subcat.id}" class="btn btn-sm btn-warning">
+              Products${subcat.prodCount > 0 ? ` (${subcat.prodCount})` : ''}
+            </a>
+
+            <!-- Add Product -->
+            <a href="/superadmin/prods/create/${subcat.catid}/${subcat.id}" class="btn btn-sm btn-success" title="Add Product">
+              <i class="fas fa-plus"></i> Product
+            </a>
+          </div>
 
         </td>
       `;

@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 
+
+
 import { CatService } from '@services/actions/Common/CatService';
+import { SubCatService } from '@services/actions/Common/SubCatService';
+import { ProdService } from '@services/actions/Common/ProdService';
 import { ImageUploadService } from '@services/actions/Common/ImageUploadService';
 import { FileUploadService } from '@services/actions/Common/FileUploadService';
 
@@ -15,11 +19,15 @@ export class CatController {
     private catService: CatService;
     private imageService: ImageUploadService;
     private fileService: FileUploadService;
+    private subCatService: SubCatService;
+    private prodService: ProdService;
 
     constructor() {
         this.catService = new CatService();
         this.imageService = new ImageUploadService();
         this.fileService = new FileUploadService();
+        this.subCatService = new SubCatService();
+        this.prodService = new ProdService();
     }
 
     // GET Many / Search / Paginated
@@ -34,28 +42,49 @@ export class CatController {
         }
     };
 
-    // Part B: return JSON data for queries
+    // Part B: return JSON data for queries, For Ajax Paginaion
     public list = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const options = {
-        page: req.body.page ? Number(req.body.page) : 1,
-        limit: req.body.limit ? Number(req.body.limit) : 5,
-        filters: req.body.filters || {},
-        orderBy: req.body.orderBy || 'id',
-        orderDir: req.body.orderDir || 'DESC',
-        search: req.body.search,
-        searchFields: req.body.searchFields || ['name', 'filer'],
-        useAnd: req.body.useAnd === true,
-        related: req.body.related,
-        fields: req.body.fields
-        };
+        try {
+            const options = {
+            page: req.body.page ? Number(req.body.page) : 1,
+            limit: req.body.limit ? Number(req.body.limit) : 5,
+            filters: req.body.filters || {},
+            orderBy: req.body.orderBy || 'id',
+            orderDir: req.body.orderDir || 'DESC',
+            search: req.body.search,
+            searchFields: req.body.searchFields || ['name', 'filer'],
+            useAnd: req.body.useAnd === true,
+            related: [
+                { association: 'subcats', attributes: ['id'] },
+                { association: 'prods', attributes: ['id'] }   // 👈 include products too
+            ],
+            
+            fields: req.body.fields
+            };
 
-        const result = await this.catService.fetchPaginatedCats(options);
+            const result = await this.catService.fetchPaginatedCats(options);
 
-        res.status(200).json({ success: true, data: result });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+            const rowsWithCount = result.rows.map(cat => {
+                const c: any = cat; // cast to any
+                const subcatCount = c.subcats ? c.subcats.length : 0;
+                const prodCount = c.prods ? c.prods.length : 0;
+
+                return {
+                    ...cat.toJSON(),
+                    subcatCount,
+                    prodCount
+                };
+            });
+
+            res.status(200).json({
+                success: true,
+                data: { rows: rowsWithCount, count: result.count }
+            });
+
+            
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     };
 
 
@@ -367,48 +396,135 @@ export class CatController {
         }
     ];
 
-
-    // Delete Single
     public destroy = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const id = Number(req.params.id);
-        if (isNaN(id)) {
-        res.status(400).json({ success: false, message: "Invalid ID parameter" });
-        return;
-        }
+        try {
+                const id = Number(req.params.id);
+                if (isNaN(id)) {
+                res.status(400).json({ success: false, message: "Invalid ID parameter" });
+                return;
+                }
 
-        const cat = await this.catService.findCatById(id);
-        if (cat) {
-        if (cat.img) await this.fileService.remove(cat.img);
-        if (cat.img2) await this.fileService.remove(cat.img2);
-        if (cat.filer) await this.fileService.remove(cat.filer);
-        }
+                // Fetch Cat with its SubCats and Prods
+                const cat = await this.catService.findCatById(id, {
+                    include: [
+                        { association: 'subcats', include: ['prods'] },
+                        { association: 'prods' }
+                    ]
+                });
 
-        const success = await this.catService.removeCat(id);
-        res.status(200).json({
-        success,
-        message: success ? "Cat deleted successfully" : "Delete failed"
-        });
-    } catch (error: any) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+                if (!cat) {
+                res.status(404).json({ success: false, message: "Cat not found" });
+                return;
+                }
+
+                // Remove Cat files
+                if (cat.img) await this.fileService.remove(cat.img);
+                if (cat.img2) await this.fileService.remove(cat.img2);
+                if (cat.filer) await this.fileService.remove(cat.filer);
+
+                // Delete SubCats and their Prods
+                for (const subcat of cat.subcats || []) {
+                if (subcat.img) await this.fileService.remove(subcat.img);
+                if (subcat.img2) await this.fileService.remove(subcat.img2);
+                if (subcat.filer) await this.fileService.remove(subcat.filer);
+
+                for (const prod of subcat.prods || []) {
+                    if (prod.img) await this.fileService.remove(prod.img);
+                    if (prod.img2) await this.fileService.remove(prod.img2);
+                    if (prod.filer) await this.fileService.remove(prod.filer);
+                    await this.prodService.removeProd(prod.id);
+                }
+
+                await this.subCatService.removeSubCat(subcat.id);
+                }
+
+                // Delete Prods directly under Cat
+                for (const prod of cat.prods || []) {
+                    if (prod.img) await this.fileService.remove(prod.img);
+                    if (prod.img2) await this.fileService.remove(prod.img2);
+                    if (prod.filer) await this.fileService.remove(prod.filer);
+                    await this.prodService.removeProd(prod.id);
+                }
+
+            // Finally delete the Cat
+            const success = await this.catService.removeCat(id);
+
+            res.status(200).json({
+            success,
+            message: success ? "Cat and all children deleted successfully" : "Delete failed"
+            });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     };
-
 
     // Delete Many
     public bulkDestroy = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const ids: number[] = req.body.ids || [];
-        if (!Array.isArray(ids) || ids.length === 0) {
-        res.status(400).json({ success: false, message: "No IDs provided" });
-        return;
-        }
+        try 
+        {
+            const ids: number[] = req.body.ids || [];
+            if (!Array.isArray(ids) || ids.length === 0) {
+            res.status(400).json({ success: false, message: "No IDs provided" });
+            return;
+            }
 
-        const count = await this.catService.bulkRemoveCats(ids);
-        res.status(200).json({ success: true, message: `${count} cats removed` });
-    } catch (error: any) {
-        res.status(400).json({ success: false, message: error.message });
-    }
+            let deletedCount = 0;
+
+            for (const id of ids) {
+            const cat = await this.catService.findCatById(id, {
+                include: [
+                { association: 'subcats', include: ['prods'] },
+                { association: 'prods' }
+                ]
+            });
+
+            if (!cat) continue;
+
+            // Remove Cat files
+            if (cat.img) await this.fileService.remove(cat.img);
+            if (cat.img2) await this.fileService.remove(cat.img2);
+            if (cat.filer) await this.fileService.remove(cat.filer);
+
+            // Delete SubCats and their Prods
+            for (const subcat of cat.subcats || []) {
+                if (subcat.img) await this.fileService.remove(subcat.img);
+                if (subcat.img2) await this.fileService.remove(subcat.img2);
+                if (subcat.filer) await this.fileService.remove(subcat.filer);
+
+                for (const prod of subcat.prods || []) {
+                if (prod.img) await this.fileService.remove(prod.img);
+                if (prod.img2) await this.fileService.remove(prod.img2);
+                if (prod.filer) await this.fileService.remove(prod.filer);
+                await this.prodService.removeProd(prod.id);
+                }
+
+                await this.subCatService.removeSubCat(subcat.id);
+            }
+
+            // Delete Prods directly under Cat
+            for (const prod of cat.prods || []) {
+                if (prod.img) await this.fileService.remove(prod.img);
+                if (prod.img2) await this.fileService.remove(prod.img2);
+                if (prod.filer) await this.fileService.remove(prod.filer);
+                await this.prodService.removeProd(prod.id);
+            }
+
+            // Finally delete the Cat
+            const success = await this.catService.removeCat(id);
+            if (success) deletedCount++;
+            }
+
+            res.status(200).json({
+            success: true,
+            message: `${deletedCount} cats (with children) removed`
+            });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message });
+        }
     };
+
+
+
+
 
 }

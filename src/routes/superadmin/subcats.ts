@@ -38,10 +38,6 @@ router.post('/dropdownjson', subCatController.dropdownJson);  // JSON via POST
 router.get('/dropdownjson/:id', subCatController.dropdownJson);   // JSON with preselect
 router.post('/dropdownjson/:id', subCatController.dropdownJson);  // JSON with preselect via POST
 
-
-
-
-
 // Store new SubCat (with optional catid)
 router.post('/store', upload.fields([
     { name: 'img', maxCount: 1 },

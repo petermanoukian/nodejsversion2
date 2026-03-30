@@ -63,6 +63,6 @@ export class CatService implements ICatService {
     }
 
     async bulkRemoveCats(ids: number[]): Promise<number> {
-    return await this.catRepository.deleteMany(ids);
+        return await this.catRepository.deleteMany(ids);
     }
 }
